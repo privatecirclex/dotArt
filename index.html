@@ -286,6 +286,19 @@
             box-shadow: 0 6px 20px rgba(244, 67, 54, 0.4);
         }
 
+        /* --- PLACEHOLDER / EMPTY STATE UI --- */
+        .placeholder-box {
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            border: 2px dashed var(--border-color); border-radius: 8px;
+            padding: 40px 20px; text-align: center; min-height: 400px;
+            background: #fafafa; color: var(--text-muted);
+            height: 100%;
+        }
+        .placeholder-icon { font-size: 3rem; margin-bottom: 15px; opacity: 0.6; }
+        .placeholder-title { font-size: 1.2rem; font-weight: 600; color: var(--text-main); margin-bottom: 8px; }
+        .placeholder-text { font-size: 0.9rem; max-width: 280px; line-height: 1.5; }
+    
+
         /* --- NEW: EXPORT MODAL STYLES --- */
         .modal-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
@@ -366,21 +379,47 @@
         <div class="panel">
             <h3 class="panel-title">1. Retouch & Cutout</h3>
             
-            <div class="toolbar">
-                <button class="tool-btn active" data-tool="eraser">Eraser (Space)</button>
-                <button class="tool-btn" data-tool="burn">Burn (Force Dots)</button>
-                <button class="tool-btn" data-tool="dodge">Dodge (Reduce Dots)</button>
-                
-                <div class="brush-controls">
-                    <label for="brushSize">Brush Size:</label>
-                    <input type="range" id="brushSize" min="5" max="150" value="40">
-                    <span id="brushSizeVal" style="font-weight: bold; width: 30px;">40</span>
-                    <button id="resetImageBtn" class="reset-btn">Reset Image</button>
-                </div>
+            <div id="leftPlaceholder" class="placeholder-box">
+                <div class="placeholder-icon">📸</div>
+                <div class="placeholder-title">Step 1: Upload a Photo</div>
+                <div class="placeholder-text">Choose an image from your device to begin the conversion process.</div>
+                <button onclick="document.getElementById('imageInput').click()" style="margin-top: 20px; background: var(--text-main); color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: 600; transition: background 0.2s;">Browse Files</button>
             </div>
 
-            <div class="canvas-wrapper">
-                <canvas id="editorCanvas"></canvas>
+            <div id="editorWorkspace" style="display: none; flex-direction: column; gap: 15px;">
+                
+                <div class="toolbar" style="flex-direction: column; gap: 12px;">
+                    <div style="display: flex; gap: 10px; flex-wrap: wrap; width: 100%;">
+                        <button class="tool-btn active" data-tool="eraser">Eraser (Space)</button>
+                        <button class="tool-btn" data-tool="burn">Burn (Force Dots)</button>
+                        <button class="tool-btn" data-tool="dodge">Dodge (Reduce Dots)</button>
+                    </div>
+                    
+                    <div style="display: flex; gap: 10px; flex-wrap: wrap; width: 100%; align-items: center; justify-content: space-between; border-top: 1px solid var(--border-color); padding-top: 12px;">
+                        <div style="display: flex; gap: 10px;">
+                            <button class="tool-btn" data-tool="crop" style="border-color: #2196F3; color: #2196F3;">◩ Crop Box</button>
+                        </div>
+                        <div style="display: flex; gap: 5px;">
+                            <button id="undoBtn" class="tool-btn" style="min-width: 40px; padding: 8px;" title="Undo (Ctrl+Z)" disabled>↩️</button>
+                            <button id="redoBtn" class="tool-btn" style="min-width: 40px; padding: 8px;" title="Redo (Ctrl+Y)" disabled>↪️</button>
+                        </div>
+                    </div>
+
+                    <div class="brush-controls" style="border-top: 1px solid var(--border-color); padding-top: 12px; margin-top: 0;">
+                        <label for="brushSize">Brush Size:</label>
+                        <input type="range" id="brushSize" min="5" max="150" value="40">
+                        <span id="brushSizeVal" style="font-weight: bold; width: 30px;">40</span>
+                        <button id="resetImageBtn" class="reset-btn">Reset Image</button>
+                    </div>
+                </div>
+
+                <div class="canvas-wrapper" style="position: relative;">
+                    <canvas id="editorCanvas"></canvas>
+                    <div id="cropOverlay" style="display: none; position: absolute; top: 15px; right: 15px; background: rgba(0,0,0,0.85); padding: 8px; border-radius: 8px; z-index: 10; box-shadow: 0 4px 15px rgba(0,0,0,0.3);">
+                        <button id="applyCropBtn" style="background: #4caf50; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; font-weight: bold; margin-right: 5px;">✓ Apply Crop</button>
+                        <button id="cancelCropBtn" style="background: #f44336; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; font-weight: bold;">✖ Cancel</button>
+                    </div>
+                </div>
             </div>
             <small style="color: var(--text-muted); text-align: center;">*Draw directly on the image to edit the background and lighting.</small>
         </div>
@@ -388,22 +427,49 @@
         <div class="panel">
             <h3 class="panel-title">2. Art Output Settings</h3>
 
+            <div id="rightPlaceholder" class="placeholder-box">
+                <div class="placeholder-icon">✨</div>
+                <div class="placeholder-title">Step 2: Configure & Export</div>
+                <div class="placeholder-text">Your generated text art, style settings, and export options will appear here once an image is loaded.</div>
+            </div>
+
+            <div id="outputWorkspace" style="display: none; flex-direction: column; gap: 15px; height: 100%;">
+                
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
                 <div class="control-group">
                     <label class="control-header" for="artStyle">Art Style</label>
                     <select id="artStyle">
                         <option value="braille">Pro Dots (High Res)</option>
-                        <option value="ascii">Classic ASCII (Social Media)</option>
+                        <option value="ascii">Custom Characters (ASCII/Emoji)</option>
                     </select>
+                </div>
+
+                <div class="control-group" id="paletteGroup" style="opacity: 0.5; pointer-events: none; margin-bottom: 5px;">
+                    <div class="control-header">
+                        <label for="customPalette">Custom Palette</label>
+                    </div>
+                    <input type="text" id="customPalette" value="@%#*+=-:. " style="width: 100%; padding: 10px 14px; border-radius: 6px; background: #fafafa; border: 1px solid var(--border-color); color: var(--text-main); font-size: 1rem; font-family: monospace; outline: none; box-sizing: border-box;">
+                    <small style="color: var(--text-muted); font-size: 0.75rem; line-height: 1.4;">
+                        <b>Darkest</b> to <b>Lightest</b>.<br>
+                        <i>Example: 🌑🌒🌓🌔🌕</i>
+                    </small>
                 </div>
                 
                 <div class="control-group">
-                    <div class="control-header">
-                        <label>Base Density</label>
-                        <span id="densityVal" style="color: var(--primary-red);">128</span>
-                    </div>
-                    <input type="range" id="densitySlider" min="1" max="254" value="128">
+                    <label class="control-header" for="imageFilter">Smart Filter</label>
+                    <select id="imageFilter">
+                        <option value="none">Standard Photo</option>
+                        <option value="edges">Line Art (Blueprint)</option>
+                    </select>
                 </div>
+            </div>
+
+            <div class="control-group" style="margin-bottom: 5px;">
+                <div class="control-header">
+                    <label>Base Density (Line Thickness)</label>
+                    <span id="densityVal" style="color: var(--primary-red);">128</span>
+                </div>
+                <input type="range" id="densitySlider" min="1" max="254" value="128">
             </div>
 
             <div class="control-group">
@@ -421,9 +487,9 @@
                 <input type="range" id="widthSlider" min="20" max="150" value="40">
             </div>
 
-            <textarea id="output" readonly placeholder="Upload an image and generate art..."></textarea>
-            <button id="openExportBtn" class="copy-btn">Export Options ✨</button>
-        </div>
+                <textarea id="output" readonly placeholder="Upload an image and generate art..."></textarea>
+                <button id="openExportBtn" class="copy-btn">Export Options ✨</button>
+            </div> </div>
 
     </div>
 
@@ -479,12 +545,23 @@
         const editorCanvas = document.getElementById('editorCanvas');
         const ctx = editorCanvas.getContext('2d', { willReadFrequently: true });
         
-        const toolBtns = document.querySelectorAll('.tool-btn');
+        // Only select buttons that actually have a brush 'data-tool' attribute
+        const toolBtns = document.querySelectorAll('.tool-btn[data-tool]');
         const brushSizeSlider = document.getElementById('brushSize');
         const brushSizeVal = document.getElementById('brushSizeVal');
         const resetImageBtn = document.getElementById('resetImageBtn');
+        
+        // New UI Elements
+        const undoBtn = document.getElementById('undoBtn');
+        const redoBtn = document.getElementById('redoBtn');
+        const cropOverlay = document.getElementById('cropOverlay');
+        const applyCropBtn = document.getElementById('applyCropBtn');
+        const cancelCropBtn = document.getElementById('cancelCropBtn');
 
         const artStyle = document.getElementById('artStyle');
+        const customPalette = document.getElementById('customPalette');
+        const paletteGroup = document.getElementById('paletteGroup');
+        const imageFilter = document.getElementById('imageFilter');
         const densitySlider = document.getElementById('densitySlider');
         const widthSlider = document.getElementById('widthSlider');
         const output = document.getElementById('output');
@@ -500,6 +577,13 @@
         let isDrawing = false;
         let lastX = 0;
         let lastY = 0;
+        
+        // History & Crop variables
+        const MAX_HISTORY = 15;
+        let undoStack = [];
+        let redoStack = [];
+        let tempCanvasSnapshot = null; // Used to redraw the canvas while dragging the crop box
+        let cropRect = { x: 0, y: 0, w: 0, h: 0 };
 
         // --- 1. IMAGE UPLOAD & CANVAS SETUP ---
         imageInput.addEventListener('change', (e) => {
@@ -538,10 +622,86 @@
             ctx.clearRect(0, 0, w, h);
             ctx.drawImage(originalImg, 0, 0, w, h);
             
+            // Clear history on new image load/reset
+            undoStack = [];
+            redoStack = [];
+            
+            // Hide Placeholders and Show Pro Workspaces
+            document.getElementById('leftPlaceholder').style.display = 'none';
+            document.getElementById('rightPlaceholder').style.display = 'none';
+            
+            document.getElementById('editorWorkspace').style.display = 'flex';
+            document.getElementById('outputWorkspace').style.display = 'flex';
+            
+            saveState(); // Save the fresh image as the first history state
             generateDotArt();
         }
 
         resetImageBtn.addEventListener('click', resetCanvas);
+
+        // --- 1.5 UNDO / REDO SYSTEM ---
+        function saveState() {
+            if (undoStack.length >= MAX_HISTORY) undoStack.shift();
+            undoStack.push(editorCanvas.toDataURL());
+            redoStack = []; // Clear redo stack whenever a new action is made
+            updateHistoryButtons();
+        }
+
+        function restoreState(dataUrl) {
+            const img = new Image();
+            img.onload = () => {
+                // Ensure canvas size matches the saved state (important if they undid a crop)
+                editorCanvas.width = img.width;
+                editorCanvas.height = img.height;
+                ctx.clearRect(0, 0, editorCanvas.width, editorCanvas.height);
+                ctx.drawImage(img, 0, 0);
+                generateDotArt();
+            };
+            img.src = dataUrl;
+        }
+
+        function undo() {
+            if (undoStack.length > 1) { // Leave at least the original state
+                redoStack.push(undoStack.pop());
+                restoreState(undoStack[undoStack.length - 1]);
+                updateHistoryButtons();
+            }
+        }
+
+        function redo() {
+            if (redoStack.length > 0) {
+                const nextState = redoStack.pop();
+                undoStack.push(nextState);
+                restoreState(nextState);
+                updateHistoryButtons();
+            }
+        }
+
+        function updateHistoryButtons() {
+            undoBtn.disabled = undoStack.length <= 1;
+            redoBtn.disabled = redoStack.length === 0;
+            
+            // Disable undo/redo if the crop overlay is open to prevent glitches
+            if (cropOverlay.style.display === 'block') {
+                undoBtn.disabled = true;
+                redoBtn.disabled = true;
+            }
+        }
+
+        undoBtn.addEventListener('click', undo);
+        redoBtn.addEventListener('click', redo);
+
+        // Keyboard Shortcuts (Ctrl+Z / Ctrl+Y)
+        document.addEventListener('keydown', (e) => {
+            if ((e.ctrlKey || e.metaKey) && e.key === 'z') {
+                e.preventDefault();
+                undo();
+            }
+            if ((e.ctrlKey || e.metaKey) && e.key === 'y') {
+                e.preventDefault();
+                redo();
+            }
+        });
 
         // --- 2. BRUSH DRAWING LOGIC ---
         toolBtns.forEach(btn => {
@@ -572,55 +732,119 @@
             };
         }
 
+        // --- 2.5 MODERN CROP ENGINE ---
+        function renderCropBox() {
+            ctx.clearRect(0, 0, editorCanvas.width, editorCanvas.height);
+            if (tempCanvasSnapshot) ctx.drawImage(tempCanvasSnapshot, 0, 0);
+
+            let rx = cropRect.w < 0 ? cropRect.x + cropRect.w : cropRect.x;
+            let ry = cropRect.h < 0 ? cropRect.y + cropRect.h : cropRect.y;
+            let rw = Math.abs(cropRect.w);
+            let rh = Math.abs(cropRect.h);
+
+            if (rw > 5 && rh > 5) {
+                // Smooth Cinematic Overlay
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+                ctx.fillRect(0, 0, editorCanvas.width, editorCanvas.height);
+                ctx.clearRect(rx, ry, rw, rh);
+                
+                // Crisp White Outline
+                ctx.beginPath();
+                ctx.strokeStyle = '#ffffff';
+                ctx.lineWidth = 2;
+                ctx.setLineDash([]);
+                ctx.strokeRect(rx, ry, rw, rh);
+
+                // Professional Rule-of-Thirds Grid
+                ctx.beginPath();
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
+                ctx.lineWidth = 1;
+                ctx.moveTo(rx + rw/3, ry); ctx.lineTo(rx + rw/3, ry + rh);
+                ctx.moveTo(rx + rw*2/3, ry); ctx.lineTo(rx + rw*2/3, ry + rh);
+                ctx.moveTo(rx, ry + rh/3); ctx.lineTo(rx + rw, ry + rh/3);
+                ctx.moveTo(rx, ry + rh*2/3); ctx.lineTo(rx + rw, ry + rh*2/3);
+                ctx.stroke();
+
+                // Pro Corner Handles
+                ctx.fillStyle = '#ffffff';
+                const s = 10;
+                ctx.fillRect(rx - s/2, ry - s/2, s, s);
+                ctx.fillRect(rx + rw - s/2, ry - s/2, s, s);
+                ctx.fillRect(rx - s/2, ry + rh - s/2, s, s);
+                ctx.fillRect(rx + rw - s/2, ry + rh - s/2, s, s);
+            }
+        }
+
         function startDrawing(e) {
-            if (!originalImg) return;
+            if (!originalImg || cropOverlay.style.display === 'block') return;
             isDrawing = true;
             const pos = getMousePos(e);
             lastX = pos.x;
             lastY = pos.y;
-            draw(e);
+
+            if (activeTool === 'crop') {
+                const tempImg = new Image();
+                tempImg.src = editorCanvas.toDataURL();
+                tempCanvasSnapshot = tempImg;
+                cropRect.x = pos.x;
+                cropRect.y = pos.y;
+            } else {
+                draw(e);
+            }
         }
 
         function draw(e) {
             if (!isDrawing) return;
-            e.preventDefault(); // Stop scrolling on touch
-            
+            e.preventDefault(); 
             const pos = getMousePos(e);
-            const size = parseInt(brushSizeSlider.value);
 
-            ctx.beginPath();
-            ctx.lineCap = 'round';
-            ctx.lineJoin = 'round';
-            ctx.lineWidth = size;
-            
-            // Configure brush blending modes
-            if (activeTool === 'eraser') {
+            if (activeTool === 'crop') {
+                cropRect.w = pos.x - cropRect.x;
+                cropRect.h = pos.y - cropRect.y;
+                renderCropBox();
+            } else {
+                const size = parseInt(brushSizeSlider.value);
+                ctx.beginPath();
+                ctx.lineCap = 'round';
+                ctx.lineJoin = 'round';
+                ctx.lineWidth = size;
+                
+                if (activeTool === 'eraser') {
+                    ctx.globalCompositeOperation = 'source-over';
+                    ctx.strokeStyle = '#ffffff'; 
+                } else if (activeTool === 'burn') {
+                    ctx.globalCompositeOperation = 'multiply';
+                    ctx.strokeStyle = 'rgba(0, 0, 0, 0.05)'; 
+                } else if (activeTool === 'dodge') {
+                    ctx.globalCompositeOperation = 'screen';
+                    ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)'; 
+                }
+
+                ctx.moveTo(lastX, lastY);
+                ctx.lineTo(pos.x, pos.y);
+                ctx.stroke();
                 ctx.globalCompositeOperation = 'source-over';
-                ctx.strokeStyle = '#ffffff'; // Pure white acts as empty space
-            } else if (activeTool === 'burn') {
-                ctx.globalCompositeOperation = 'multiply';
-                ctx.strokeStyle = 'rgba(0, 0, 0, 0.05)'; // Soft darkening
-            } else if (activeTool === 'dodge') {
-                ctx.globalCompositeOperation = 'screen';
-                ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)'; // Soft lightening
+
+                lastX = pos.x;
+                lastY = pos.y;
             }
-
-            ctx.moveTo(lastX, lastY);
-            ctx.lineTo(pos.x, pos.y);
-            ctx.stroke();
-
-            // Reset back to normal to prevent weird UI glitches
-            ctx.globalCompositeOperation = 'source-over';
-
-            lastX = pos.x;
-            lastY = pos.y;
         }
 
         function stopDrawing() {
             if (isDrawing) {
                 isDrawing = false;
-                // Live update the right panel when you lift the brush!
-                generateDotArt(); 
+                if (activeTool === 'crop') {
+                    if (Math.abs(cropRect.w) > 10 && Math.abs(cropRect.h) > 10) {
+                        cropOverlay.style.display = 'block'; 
+                        updateHistoryButtons(); 
+                    } else {
+                        ctx.clearRect(0, 0, editorCanvas.width, editorCanvas.height);
+                        if (tempCanvasSnapshot) ctx.drawImage(tempCanvasSnapshot, 0, 0);
+                    }
+                } else {
+                    saveState(); 
+                    generateDotArt(); 
+                }
             }
         }
 
@@ -634,6 +858,41 @@
         editorCanvas.addEventListener('touchstart', startDrawing, {passive: false});
         editorCanvas.addEventListener('touchmove', draw, {passive: false});
         editorCanvas.addEventListener('touchend', stopDrawing);
+
+        // --- 2.5 CROP & TRIM EXECUTION ---
+        
+        // Manual Crop Buttons
+        applyCropBtn.addEventListener('click', () => {
+            // Fix negative width/height if user dragged backwards
+            let realX = cropRect.w < 0 ? cropRect.x + cropRect.w : cropRect.x;
+            let realY = cropRect.h < 0 ? cropRect.y + cropRect.h : cropRect.y;
+            let realW = Math.abs(cropRect.w);
+            let realH = Math.abs(cropRect.h);
+
+            // Extract the cropped data from the clean snapshot
+            const croppedCanvas = document.createElement('canvas');
+            croppedCanvas.width = realW;
+            croppedCanvas.height = realH;
+            croppedCanvas.getContext('2d').drawImage(tempCanvasSnapshot, realX, realY, realW, realH, 0, 0, realW, realH);
+
+            // Resize main canvas and apply
+            editorCanvas.width = realW;
+            editorCanvas.height = realH;
+            ctx.clearRect(0, 0, realW, realH);
+            ctx.drawImage(croppedCanvas, 0, 0);
+
+            cropOverlay.style.display = 'none';
+            saveState(); // Save crop to history
+            generateDotArt();
+        });
+
+        cancelCropBtn.addEventListener('click', () => {
+            ctx.clearRect(0, 0, editorCanvas.width, editorCanvas.height);
+            if (tempCanvasSnapshot) ctx.drawImage(tempCanvasSnapshot, 0, 0); // Restore image
+            cropOverlay.style.display = 'none';
+            updateHistoryButtons(); // Re-enable undo
+        });
+
 
         // --- 3. SETTINGS CONTROLS ---
         function updateActivePreset(value) {
@@ -659,7 +918,24 @@
             if (originalImg) generateDotArt();
         };
 
-        artStyle.addEventListener('change', updateSliders);
+        artStyle.addEventListener('change', () => {
+            // Toggle the custom palette input based on the engine selected
+            if (artStyle.value === 'ascii') {
+                paletteGroup.style.opacity = '1';
+                paletteGroup.style.pointerEvents = 'auto';
+            } else {
+                paletteGroup.style.opacity = '0.5';
+                paletteGroup.style.pointerEvents = 'none';
+            }
+            updateSliders();
+        });
+        
+        // Auto-update the art whenever the user types a new character/emoji
+        customPalette.addEventListener('input', () => {
+            if (originalImg) generateDotArt();
+        });
+        
+        imageFilter.addEventListener('change', updateSliders);
         densitySlider.addEventListener('input', updateSliders);
         widthSlider.addEventListener('input', updateSliders);
 
@@ -728,6 +1004,48 @@
                 }
             }
 
+            // --- NEW: 1.5 Sobel Edge Detection Filter ---
+            if (imageFilter.value === 'edges') {
+                const sobelPixels = new Float32Array(w * h);
+                // The Sobel Kernels (Mathematical matrices that detect vertical and horizontal contrast)
+                const kernelX = [-1, 0, 1, -2, 0, 2, -1, 0, 1];
+                const kernelY = [-1, -2, -1, 0, 0, 0, 1, 2, 1];
+
+                // Loop through every pixel (skipping the absolute outer 1px border)
+                for (let y = 1; y < h - 1; y++) {
+                    for (let x = 1; x < w - 1; x++) {
+                        let pixelX = 0;
+                        let pixelY = 0;
+                        
+                        // Check the 8 surrounding neighbor pixels
+                        for (let ky = -1; ky <= 1; ky++) {
+                            for (let kx = -1; kx <= 1; kx++) {
+                                const val = pixels[(y + ky) * w + (x + kx)];
+                                const weightIndex = (ky + 1) * 3 + (kx + 1);
+                                pixelX += val * kernelX[weightIndex];
+                                pixelY += val * kernelY[weightIndex];
+                            }
+                        }
+                        
+                        // Calculate edge strength
+                        const magnitude = Math.sqrt(pixelX * pixelX + pixelY * pixelY);
+                        
+                        // Invert the result so strong edges become dark dots (0), and flat areas become empty space (255)
+                        sobelPixels[y * w + x] = Math.max(0, 255 - magnitude); 
+                    }
+                }
+                
+                // Copy the processed edges back into the main pixel array
+                for (let i = 0; i < pixels.length; i++) {
+                    // Force the outer 1px border to be pure empty space so it doesn't draw a weird frame
+                    if (i < w || i > w * (h - 1) || i % w === 0 || i % w === w - 1) {
+                        pixels[i] = 255; 
+                    } else {
+                        pixels[i] = sobelPixels[i];
+                    }
+                }
+            }
+
             // 2. Dithering Algorithm
             const steps = mode === 'braille' ? 1 : 9; 
             const stepSize = 255 / steps;
@@ -767,7 +1085,12 @@
                     textArt += "\n";
                 }
             } else {
-                const asciiScale = "@%#*+=-:. "; 
+                // Read from the input box, default to standard if empty
+                const rawPalette = customPalette.value || "@%#*+=-:. ";
+                
+                // Use Array.from() to safely split emojis without breaking Unicode surrogate pairs
+                const asciiScale = Array.from(rawPalette); 
+                
                 for (let y = 0; y < h; y++) {
                     for (let x = 0; x < w; x++) {
                         const gray = pixels[y * w + x];
@@ -989,7 +1312,7 @@
                 downloadGifBtn.style.display = 'flex';
                 
                 // Update Generate Button
-                modalGifBtn.innerText = "🔄 Re-Generate Preview";
+                modalGifBtn.innerText = "Re-Generate Preview";
                 modalGifBtn.style.pointerEvents = 'auto';
             });
 
