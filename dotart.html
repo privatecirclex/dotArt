@@ -1,0 +1,1081 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pro Dot Art Studio</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gif.js/0.2.0/gif.js"></script>
+    <style>
+        :root {
+            --bg-color: #f4f5f7;
+            --card-bg: #ffffff;
+            --text-main: #2d2d2d;
+            --text-muted: #757575;
+            --primary-yellow: #ffca28;
+            --primary-orange: #ff9800;
+            --primary-red: #f44336;
+            --border-color: #e0e0e0;
+            --active-tool: #ffedc2;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .header {
+            width: 100%;
+            background: var(--card-bg);
+            padding: 15px 2rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 4px solid var(--primary-orange);
+            margin-bottom: 20px;
+        }
+
+        .header h1 {
+            margin: 0;
+            background: linear-gradient(90deg, var(--primary-red), var(--primary-orange), var(--primary-yellow));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-size: 2rem;
+        }
+
+        .upload-btn-wrapper {
+            position: relative;
+            overflow: hidden;
+            display: inline-block;
+        }
+
+        .upload-btn-wrapper button {
+            background: linear-gradient(135deg, var(--primary-orange), var(--primary-yellow));
+            color: #111;
+            border: none;
+            padding: 10px 20px;
+            font-size: 1rem;
+            font-weight: bold;
+            border-radius: 8px;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(255, 152, 0, 0.3);
+        }
+
+        .upload-btn-wrapper input[type=file] {
+            font-size: 100px;
+            position: absolute;
+            left: 0;
+            top: 0;
+            opacity: 0;
+            cursor: pointer;
+        }
+
+        .studio-container {
+            width: 100%;
+            max-width: 1400px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            padding: 0 20px 40px 20px;
+        }
+
+        @media (max-width: 900px) {
+            .studio-container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .panel {
+            background: var(--card-bg);
+            border-radius: 12px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.06);
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .panel-title {
+            margin: 0 0 10px 0;
+            font-size: 1.2rem;
+            color: var(--text-main);
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 10px;
+        }
+
+        /* Brush Toolbar */
+        .toolbar {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            background: #fafafa;
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+        }
+
+        .tool-btn {
+            background: #fff;
+            border: 2px solid var(--border-color);
+            padding: 8px 15px;
+            border-radius: 6px;
+            font-weight: bold;
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: all 0.2s;
+            flex: 1;
+            min-width: 80px;
+            text-align: center;
+        }
+
+        .tool-btn:hover {
+            border-color: var(--primary-orange);
+            color: var(--primary-orange);
+        }
+
+        .tool-btn.active {
+            background: var(--active-tool);
+            border-color: var(--primary-orange);
+            color: #d84315;
+        }
+
+        .brush-controls {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            width: 100%;
+            margin-top: 5px;
+        }
+
+        .brush-controls label {
+            font-weight: bold;
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            white-space: nowrap;
+        }
+
+        /* Canvas Wrapper */
+        .canvas-wrapper {
+            width: 100%;
+            background: repeating-conic-gradient(#eee 0% 25%, transparent 0% 50%) 50% / 20px 20px;
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            position: relative;
+            min-height: 400px;
+        }
+
+        canvas {
+            max-width: 100%;
+            height: auto;
+            cursor: crosshair;
+            touch-action: none; /* Prevents scrolling while drawing on mobile */
+        }
+
+        .reset-btn {
+            background: none;
+            border: none;
+            color: var(--primary-red);
+            font-weight: bold;
+            cursor: pointer;
+            text-decoration: underline;
+            padding: 0;
+            margin-left: auto;
+        }
+
+        /* Right Panel Controls */
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .control-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+
+        input[type="range"] {
+            accent-color: var(--primary-orange);
+            width: 100%;
+            cursor: pointer;
+        }
+
+        select {
+            padding: 10px;
+            border-radius: 6px;
+            background: #fafafa;
+            border: 1px solid var(--border-color);
+            font-weight: bold;
+            cursor: pointer;
+            color: var(--text-main);
+        }
+
+        .preset-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .preset-btn {
+            background: #fff;
+            border: 1px solid var(--border-color);
+            color: var(--text-muted);
+            border-radius: 20px;
+            padding: 6px 12px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .preset-btn.active {
+            border-color: var(--primary-orange);
+            background-color: var(--primary-orange);
+            color: white;
+        }
+
+        textarea {
+            width: 100%;
+            flex-grow: 1;
+            min-height: 350px;
+            background-color: #ffffff;
+            color: #1a1a1a;
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            padding: 15px;
+            font-family: monospace;
+            font-size: 10px;
+            line-height: 1;
+            resize: vertical;
+            white-space: pre;
+            overflow: auto;
+        }
+
+        .copy-btn {
+            background: linear-gradient(135deg, var(--primary-orange), var(--primary-red));
+            color: white;
+            border: none;
+            padding: 15px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            box-shadow: 0 4px 15px rgba(244, 67, 54, 0.3);
+        }
+
+        .copy-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(244, 67, 54, 0.4);
+        }
+
+        /* --- NEW: EXPORT MODAL STYLES --- */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.6); backdrop-filter: blur(4px);
+            display: flex; justify-content: center; align-items: center;
+            z-index: 1000; opacity: 0; pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+        .modal-overlay.active {
+            opacity: 1; pointer-events: auto;
+        }
+        .modal-box {
+            background: var(--card-bg); width: 90%; max-width: 450px;
+            border-radius: 12px; padding: 25px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+            transform: translateY(20px); transition: transform 0.3s ease;
+        }
+        .modal-overlay.active .modal-box {
+            transform: translateY(0);
+        }
+        .modal-header {
+            display: flex; justify-content: space-between; align-items: center;
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 15px; margin-bottom: 20px;
+        }
+        .modal-header h3 { margin: 0; color: var(--text-main); font-size: 1.4rem; }
+        .close-modal {
+            background: none; border: none; font-size: 1.5rem;
+            cursor: pointer; color: var(--text-muted); transition: color 0.2s;
+        }
+        .close-modal:hover { color: var(--primary-red); }
+        .export-grid { display: flex; flex-direction: column; gap: 12px; }
+        .export-option-btn {
+            background: #f8f9fa; border: 2px solid var(--border-color);
+            padding: 14px; border-radius: 8px; cursor: pointer;
+            font-weight: bold; color: var(--text-main); font-size: 1rem;
+            transition: all 0.2s; text-align: left;
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .export-option-btn:hover {
+            border-color: var(--primary-orange); color: var(--primary-orange);
+            background: #fff9f0;
+        }
+        .export-option-btn.primary {
+            background: linear-gradient(135deg, var(--primary-orange), var(--primary-yellow));
+            color: #111; border: none;
+        }
+        .export-option-btn.primary:hover { transform: translateY(-2px); box-shadow: 0 4px 10px rgba(255, 152, 0, 0.3); }
+        .gif-controls {
+            background: #fff; border: 2px dashed var(--border-color);
+            padding: 15px; border-radius: 8px; margin-top: 5px;
+            display: flex; flex-direction: column; gap: 10px;
+        }
+        
+        .gif-preview-box {
+            display: none; width: 100%; border-radius: 6px; 
+            overflow: hidden; background: #000; text-align: center;
+            margin-top: 5px; border: 1px solid var(--border-color);
+        }
+        
+        .gif-preview-box img {
+            max-width: 100%; max-height: 200px; display: block; margin: 0 auto;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h1>Pro Dot Art Studio</h1>
+        <div class="upload-btn-wrapper">
+            <button>Upload Image</button>
+            <input type="file" id="imageInput" accept="image/*">
+        </div>
+    </div>
+
+    <div class="studio-container">
+        
+        <div class="panel">
+            <h3 class="panel-title">1. Retouch & Cutout</h3>
+            
+            <div class="toolbar">
+                <button class="tool-btn active" data-tool="eraser">Eraser (Space)</button>
+                <button class="tool-btn" data-tool="burn">Burn (Force Dots)</button>
+                <button class="tool-btn" data-tool="dodge">Dodge (Reduce Dots)</button>
+                
+                <div class="brush-controls">
+                    <label for="brushSize">Brush Size:</label>
+                    <input type="range" id="brushSize" min="5" max="150" value="40">
+                    <span id="brushSizeVal" style="font-weight: bold; width: 30px;">40</span>
+                    <button id="resetImageBtn" class="reset-btn">Reset Image</button>
+                </div>
+            </div>
+
+            <div class="canvas-wrapper">
+                <canvas id="editorCanvas"></canvas>
+            </div>
+            <small style="color: var(--text-muted); text-align: center;">*Draw directly on the image to edit the background and lighting.</small>
+        </div>
+
+        <div class="panel">
+            <h3 class="panel-title">2. Art Output Settings</h3>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                <div class="control-group">
+                    <label class="control-header" for="artStyle">Art Style</label>
+                    <select id="artStyle">
+                        <option value="braille">Pro Dots (High Res)</option>
+                        <option value="ascii">Classic ASCII (Social Media)</option>
+                    </select>
+                </div>
+                
+                <div class="control-group">
+                    <div class="control-header">
+                        <label>Base Density</label>
+                        <span id="densityVal" style="color: var(--primary-red);">128</span>
+                    </div>
+                    <input type="range" id="densitySlider" min="1" max="254" value="128">
+                </div>
+            </div>
+
+            <div class="control-group">
+                <div class="control-header">
+                    <label>Output Format Width (Characters)</label>
+                    <span id="widthVal" style="color: var(--primary-yellow);">40</span>
+                </div>
+                <div class="preset-container" id="presetButtons">
+                    <button class="preset-btn" data-width="30">Insta (30)</button>
+                    <button class="preset-btn active" data-width="40">WhatsApp (40)</button>
+                    <button class="preset-btn" data-width="45">Twitter (45)</button>
+                    <button class="preset-btn" data-width="65">Facebook (65)</button>
+                    <button class="preset-btn" data-width="100">Discord (100)</button>
+                </div>
+                <input type="range" id="widthSlider" min="20" max="150" value="40">
+            </div>
+
+            <textarea id="output" readonly placeholder="Upload an image and generate art..."></textarea>
+            <button id="openExportBtn" class="copy-btn">Export Options ✨</button>
+        </div>
+
+    </div>
+
+    <div class="modal-overlay" id="exportModal">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h3>Export Art</h3>
+                <button class="close-modal" id="closeExportBtn">&times;</button>
+            </div>
+            
+            <div class="export-grid">
+                <button class="export-option-btn" id="modalCopyBtn">
+                    <span>📝 Copy as Text</span>
+                    <span style="font-size: 0.8em; color: var(--text-muted);">(Best for WhatsApp/Discord)</span>
+                </button>
+
+                <button class="export-option-btn" id="modalPngBtn">
+                    <span>🖼️ Download PNG Image</span>
+                    <span style="font-size: 0.8em; color: var(--text-muted);">(Best for Instagram)</span>
+                </button>
+
+                <div class="gif-controls">
+                    <label style="font-weight: bold; font-size: 0.9rem;">🎬 Create Animated GIF</label>
+                    <select id="gifEffect" style="width: 100%;">
+                        <option value="none">No Effect (Static GIF)</option>
+                        <option value="wave">Cyber Wave</option>
+                        <option value="glitch">TV Glitch</option>
+                        <option value="fade">Pulse Fade</option>
+                        <option value="matrix">Matrix Decode</option>
+                        <option value="typewriter">Terminal Hacker</option>
+                        <option value="shake">Earthquake</option>
+                        <option value="rgb">RGB Gamer Glow</option>
+                        <option value="crt">CRT Scanline</option>
+                    </select>
+                    <button class="export-option-btn primary" id="modalGifBtn" style="justify-content: center; margin-top: 5px;">
+                        Generate GIF Preview
+                    </button>
+                    
+                    <div class="gif-preview-box" id="gifPreviewBox">
+                        <img id="gifPreviewImg" src="" alt="GIF Preview">
+                    </div>
+                    <button class="export-option-btn primary" id="downloadGifBtn" style="justify-content: center; display: none; background: linear-gradient(135deg, #4caf50, #8bc34a);">
+                        💾 Download GIF
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // DOM Elements
+        const imageInput = document.getElementById('imageInput');
+        const editorCanvas = document.getElementById('editorCanvas');
+        const ctx = editorCanvas.getContext('2d', { willReadFrequently: true });
+        
+        const toolBtns = document.querySelectorAll('.tool-btn');
+        const brushSizeSlider = document.getElementById('brushSize');
+        const brushSizeVal = document.getElementById('brushSizeVal');
+        const resetImageBtn = document.getElementById('resetImageBtn');
+
+        const artStyle = document.getElementById('artStyle');
+        const densitySlider = document.getElementById('densitySlider');
+        const widthSlider = document.getElementById('widthSlider');
+        const output = document.getElementById('output');
+        const copyBtn = document.getElementById('copyBtn');
+        const presetBtns = document.querySelectorAll('.preset-btn');
+        
+        const densityVal = document.getElementById('densityVal');
+        const widthVal = document.getElementById('widthVal');
+
+        // State variables
+        let originalImg = null;
+        let activeTool = 'eraser';
+        let isDrawing = false;
+        let lastX = 0;
+        let lastY = 0;
+
+        // --- 1. IMAGE UPLOAD & CANVAS SETUP ---
+        imageInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                const img = new Image();
+                img.onload = () => {
+                    originalImg = img;
+                    resetCanvas();
+                };
+                img.src = event.target.result;
+            };
+            reader.readAsDataURL(file);
+        });
+
+        function resetCanvas() {
+            if (!originalImg) return;
+            
+            // Limit internal canvas size for performance while keeping high res
+            const MAX_DIMENSION = 800;
+            let w = originalImg.width;
+            let h = originalImg.height;
+
+            if (w > MAX_DIMENSION || h > MAX_DIMENSION) {
+                const ratio = Math.min(MAX_DIMENSION / w, MAX_DIMENSION / h);
+                w = Math.floor(w * ratio);
+                h = Math.floor(h * ratio);
+            }
+
+            editorCanvas.width = w;
+            editorCanvas.height = h;
+            
+            ctx.clearRect(0, 0, w, h);
+            ctx.drawImage(originalImg, 0, 0, w, h);
+            
+            generateDotArt();
+        }
+
+        resetImageBtn.addEventListener('click', resetCanvas);
+
+        // --- 2. BRUSH DRAWING LOGIC ---
+        toolBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                toolBtns.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                activeTool = btn.dataset.tool;
+            });
+        });
+
+        brushSizeSlider.addEventListener('input', (e) => {
+            brushSizeVal.innerText = e.target.value;
+        });
+
+        function getMousePos(e) {
+            const rect = editorCanvas.getBoundingClientRect();
+            // Handle both Mouse and Touch events
+            const clientX = e.clientX || (e.touches && e.touches[0].clientX);
+            const clientY = e.clientY || (e.touches && e.touches[0].clientY);
+            
+            // Map visual CSS scale back to native canvas coordinates
+            const scaleX = editorCanvas.width / rect.width;
+            const scaleY = editorCanvas.height / rect.height;
+
+            return {
+                x: (clientX - rect.left) * scaleX,
+                y: (clientY - rect.top) * scaleY
+            };
+        }
+
+        function startDrawing(e) {
+            if (!originalImg) return;
+            isDrawing = true;
+            const pos = getMousePos(e);
+            lastX = pos.x;
+            lastY = pos.y;
+            draw(e);
+        }
+
+        function draw(e) {
+            if (!isDrawing) return;
+            e.preventDefault(); // Stop scrolling on touch
+            
+            const pos = getMousePos(e);
+            const size = parseInt(brushSizeSlider.value);
+
+            ctx.beginPath();
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+            ctx.lineWidth = size;
+            
+            // Configure brush blending modes
+            if (activeTool === 'eraser') {
+                ctx.globalCompositeOperation = 'source-over';
+                ctx.strokeStyle = '#ffffff'; // Pure white acts as empty space
+            } else if (activeTool === 'burn') {
+                ctx.globalCompositeOperation = 'multiply';
+                ctx.strokeStyle = 'rgba(0, 0, 0, 0.05)'; // Soft darkening
+            } else if (activeTool === 'dodge') {
+                ctx.globalCompositeOperation = 'screen';
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)'; // Soft lightening
+            }
+
+            ctx.moveTo(lastX, lastY);
+            ctx.lineTo(pos.x, pos.y);
+            ctx.stroke();
+
+            // Reset back to normal to prevent weird UI glitches
+            ctx.globalCompositeOperation = 'source-over';
+
+            lastX = pos.x;
+            lastY = pos.y;
+        }
+
+        function stopDrawing() {
+            if (isDrawing) {
+                isDrawing = false;
+                // Live update the right panel when you lift the brush!
+                generateDotArt(); 
+            }
+        }
+
+        // Mouse Events
+        editorCanvas.addEventListener('mousedown', startDrawing);
+        editorCanvas.addEventListener('mousemove', draw);
+        editorCanvas.addEventListener('mouseup', stopDrawing);
+        editorCanvas.addEventListener('mouseout', stopDrawing);
+
+        // Touch Events
+        editorCanvas.addEventListener('touchstart', startDrawing, {passive: false});
+        editorCanvas.addEventListener('touchmove', draw, {passive: false});
+        editorCanvas.addEventListener('touchend', stopDrawing);
+
+        // --- 3. SETTINGS CONTROLS ---
+        function updateActivePreset(value) {
+            presetBtns.forEach(btn => {
+                if(btn.dataset.width === value) btn.classList.add('active');
+                else btn.classList.remove('active');
+            });
+        }
+
+        presetBtns.forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const newWidth = e.target.dataset.width;
+                widthSlider.value = newWidth;
+                updateActivePreset(newWidth);
+                updateSliders();
+            });
+        });
+
+        const updateSliders = () => {
+            densityVal.innerText = densitySlider.value;
+            widthVal.innerText = widthSlider.value;
+            updateActivePreset(widthSlider.value);
+            if (originalImg) generateDotArt();
+        };
+
+        artStyle.addEventListener('change', updateSliders);
+        densitySlider.addEventListener('input', updateSliders);
+        widthSlider.addEventListener('input', updateSliders);
+
+        // --- 4. CORE ALGORITHM (Reading from Edited Canvas) ---
+        function generateDotArt() {
+            if (!originalImg) return;
+
+            // We create an offscreen canvas to scale the EDITED image down to text resolution
+            const processCanvas = document.createElement('canvas');
+            const pCtx = processCanvas.getContext('2d');
+
+            const mode = artStyle.value;
+            const charWidth = parseInt(widthSlider.value);
+            const canvasMaxWidth = mode === 'braille' ? charWidth * 2 : charWidth; 
+
+            let w = editorCanvas.width;
+            let h = editorCanvas.height;
+
+            if (mode === 'braille') {
+                if (w > canvasMaxWidth) {
+                    h = Math.floor(h * (canvasMaxWidth / w));
+                    w = canvasMaxWidth;
+                }
+                w = w - (w % 2);
+                h = h - (h % 4);
+            } else {
+                if (w > canvasMaxWidth) {
+                    h = Math.floor(h * (canvasMaxWidth / w) * 0.45);
+                    w = canvasMaxWidth;
+                } else {
+                    h = Math.floor(h * 0.45);
+                }
+            }
+
+            processCanvas.width = w;
+            processCanvas.height = h;
+            
+            // Draw the painted/edited canvas into the tiny processing canvas
+            pCtx.drawImage(editorCanvas, 0, 0, w, h);
+            const imageData = pCtx.getImageData(0, 0, w, h).data;
+            
+            const densityCutoff = parseInt(densitySlider.value);
+            const pixels = new Float32Array(w * h);
+            
+            // 1. Grayscale & Brightness Adjustment (Now with Alpha Transparency support!)
+            const brightnessShift = 128 - densityCutoff;
+            for (let i = 0; i < imageData.length; i += 4) {
+                const r = imageData[i];
+                const g = imageData[i + 1];
+                const b = imageData[i + 2];
+                const a = imageData[i + 3]; // The Alpha (transparency) channel
+                
+                // If the pixel is completely transparent OR the user erased it with the white brush
+                if (a === 0 || (r === 255 && g === 255 && b === 255)) {
+                    pixels[i / 4] = 255; // Force it to be pure white (empty space)
+                } else {
+                    // Smoothly blend any semi-transparent edges against a white background
+                    const alphaRatio = a / 255;
+                    const blendedR = r * alphaRatio + 255 * (1 - alphaRatio);
+                    const blendedG = g * alphaRatio + 255 * (1 - alphaRatio);
+                    const blendedB = b * alphaRatio + 255 * (1 - alphaRatio);
+
+                    let gray = blendedR * 0.299 + blendedG * 0.587 + blendedB * 0.114;
+                    gray += brightnessShift; 
+                    pixels[i / 4] = Math.max(0, Math.min(255, gray));
+                }
+            }
+
+            // 2. Dithering Algorithm
+            const steps = mode === 'braille' ? 1 : 9; 
+            const stepSize = 255 / steps;
+
+            for (let y = 0; y < h; y++) {
+                for (let x = 0; x < w; x++) {
+                    const i = y * w + x;
+                    const oldPixel = pixels[i];
+                    const newPixel = Math.round(oldPixel / stepSize) * stepSize;
+                    pixels[i] = newPixel;
+                    const error = oldPixel - newPixel;
+
+                    if (x + 1 < w) pixels[i + 1] += error * 7 / 16;
+                    if (y + 1 < h) {
+                        if (x - 1 >= 0) pixels[i + w - 1] += error * 3 / 16;
+                        pixels[i + w] += error * 5 / 16;
+                        if (x + 1 < w) pixels[i + w + 1] += error * 1 / 16;
+                    }
+                }
+            }
+
+            // 3. Render
+            let textArt = "";
+            if (mode === 'braille') {
+                const brailleMap = [[0x01, 0x08], [0x02, 0x10], [0x04, 0x20], [0x40, 0x80]];
+                for (let y = 0; y < h; y += 4) {
+                    for (let x = 0; x < w; x += 2) {
+                        let charCode = 0x2800; 
+                        for (let dy = 0; dy < 4; dy++) {
+                            for (let dx = 0; dx < 2; dx++) {
+                                const pixelIndex = (y + dy) * w + (x + dx);
+                                if (pixels[pixelIndex] < 128) charCode += brailleMap[dy][dx];
+                            }
+                        }
+                        textArt += String.fromCharCode(charCode);
+                    }
+                    textArt += "\n";
+                }
+            } else {
+                const asciiScale = "@%#*+=-:. "; 
+                for (let y = 0; y < h; y++) {
+                    for (let x = 0; x < w; x++) {
+                        const gray = pixels[y * w + x];
+                        let charIndex = Math.floor((gray / 255) * (asciiScale.length - 1));
+                        charIndex = Math.max(0, Math.min(asciiScale.length - 1, charIndex));
+                        textArt += asciiScale[charIndex];
+                    }
+                    textArt += "\n";
+                }
+            }
+
+            output.value = textArt;
+        }
+
+        // --- 5. MODAL & EXPORT FUNCTIONALITY ---
+        const exportModal = document.getElementById('exportModal');
+        const openExportBtn = document.getElementById('openExportBtn');
+        const closeExportBtn = document.getElementById('closeExportBtn');
+        
+        const modalCopyBtn = document.getElementById('modalCopyBtn');
+        const modalPngBtn = document.getElementById('modalPngBtn');
+        const modalGifBtn = document.getElementById('modalGifBtn');
+        const gifEffect = document.getElementById('gifEffect');
+
+        // Toggle Modal
+        openExportBtn.addEventListener('click', () => {
+            if (!output.value) return alert("Please generate some art first!");
+            exportModal.classList.add('active');
+        });
+        closeExportBtn.addEventListener('click', () => exportModal.classList.remove('active'));
+        exportModal.addEventListener('click', (e) => {
+            if (e.target === exportModal) exportModal.classList.remove('active');
+        });
+
+        // Setup GIF Worker Blob (Prevents browser CORS security errors)
+        let gifWorkerUrl = null;
+        fetch('https://cdnjs.cloudflare.com/ajax/libs/gif.js/0.2.0/gif.worker.js')
+            .then(res => res.text())
+            .then(text => {
+                const blob = new Blob([text], {type: 'application/javascript'});
+                gifWorkerUrl = URL.createObjectURL(blob);
+            });
+
+        // Core Drawing Function: Converts Text into a Canvas Image
+        function drawTextToCanvas(lines, effect, frameNum, totalFrames) {
+            const canvas = document.createElement('canvas');
+            const cCtx = canvas.getContext('2d');
+            
+            const fontSize = 12;
+            const lineHeight = 14;
+            cCtx.font = `${fontSize}px monospace`;
+            
+            // Measure width to fit text perfectly
+            const maxChars = lines.reduce((max, line) => Math.max(max, line.length), 0);
+            const charWidth = cCtx.measureText('M').width;
+            
+            canvas.width = (maxChars * charWidth) + 40; // 40px padding
+            canvas.height = (lines.length * lineHeight) + 40;
+
+            // Draw Background
+            cCtx.fillStyle = '#ffffff';
+            cCtx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Draw Text Settings
+            cCtx.font = `${fontSize}px monospace`;
+            cCtx.textBaseline = 'top';
+
+            for (let i = 0; i < lines.length; i++) {
+                let x = 20; 
+                let y = 20 + (i * lineHeight);
+                let lineText = lines[i];
+
+                cCtx.globalAlpha = 1.0;
+                cCtx.fillStyle = '#111111';
+
+                // --- APPLY ANIMATIONS ---
+                if (effect === 'wave') {
+                    x += Math.sin((i * 0.3) + (frameNum * 0.5)) * 8; 
+                } 
+                else if (effect === 'glitch') {
+                    if (Math.random() < 0.08) { 
+                        x += (Math.random() - 0.5) * 20;
+                        cCtx.fillStyle = Math.random() < 0.5 ? '#f44336' : '#2196F3'; 
+                    }
+                } 
+                else if (effect === 'fade') {
+                    cCtx.globalAlpha = Math.abs(Math.sin((frameNum / totalFrames) * Math.PI)); 
+                }
+                else if (effect === 'shake') {
+                    x += (Math.random() - 0.5) * 6;
+                    y += (Math.random() - 0.5) * 6;
+                }
+                else if (effect === 'rgb') {
+                    const hue = ((i * 5) + (frameNum / totalFrames) * 360) % 360;
+                    cCtx.fillStyle = `hsl(${hue}, 100%, 45%)`;
+                }
+                else if (effect === 'matrix') {
+                    // Scramble text for the first 70% of the frames, then settle
+                    const isDecoding = frameNum < (totalFrames * 0.7);
+                    if (isDecoding) {
+                        const chars = "@%#*+=-:. ";
+                        lineText = lineText.split('').map(c => c === ' ' ? ' ' : (Math.random() < 0.3 ? chars[Math.floor(Math.random() * chars.length)] : c)).join('');
+                        cCtx.fillStyle = '#4caf50'; // Matrix Green
+                    }
+                }
+                else if (effect === 'typewriter') {
+                    // Reveal line by line
+                    const progress = frameNum / (totalFrames - 1);
+                    const visibleLines = Math.floor(progress * lines.length);
+                    
+                    if (i > visibleLines) {
+                        lineText = ""; // Hide future lines
+                    } else if (i === visibleLines) {
+                        const lineProgress = (progress * lines.length) - visibleLines;
+                        const charsToShow = Math.floor(lineProgress * lines[i].length);
+                        lineText = lines[i].substring(0, charsToShow) + (frameNum < totalFrames - 1 ? '█' : '');
+                    }
+                }
+
+                if (lineText.length > 0) cCtx.fillText(lineText, x, y);
+            }
+
+            // --- GLOBAL OVERLAY EFFECTS ---
+            if (effect === 'crt') {
+                // Draw a rolling dark scanline over the whole canvas
+                const barY = ((frameNum / totalFrames) * (canvas.height + 50)) - 50;
+                cCtx.fillStyle = 'rgba(0, 0, 0, 0.15)';
+                cCtx.fillRect(0, barY, canvas.width, 30);
+                
+                // Add a very faint static overlay
+                cCtx.fillStyle = 'rgba(0, 0, 0, 0.03)';
+                for(let sy = 0; sy < canvas.height; sy += 4) {
+                    cCtx.fillRect(0, sy, canvas.width, 1);
+                }
+            }
+
+            return canvas;
+        }
+
+        // 5a. Copy Text
+        modalCopyBtn.addEventListener('click', () => {
+            navigator.clipboard.writeText(output.value).then(() => {
+                const ogHTML = modalCopyBtn.innerHTML;
+                modalCopyBtn.innerHTML = "<span>✅ Copied Successfully!</span>";
+                setTimeout(() => modalCopyBtn.innerHTML = ogHTML, 2000);
+            });
+        });
+
+        // 5b. Export PNG
+        modalPngBtn.addEventListener('click', () => {
+            const lines = output.value.split('\n');
+            const imgCanvas = drawTextToCanvas(lines, 'none', 0, 1);
+            
+            const a = document.createElement('a');
+            a.download = 'DotArt_Static.png';
+            a.href = imgCanvas.toDataURL('image/png');
+            a.click();
+        });
+
+        // 5c. Export Animated GIF (With Preview)
+        const gifPreviewBox = document.getElementById('gifPreviewBox');
+        const gifPreviewImg = document.getElementById('gifPreviewImg');
+        const downloadGifBtn = document.getElementById('downloadGifBtn');
+        let currentGifBlobUrl = null;
+
+        // Hide preview if the user changes the effect drop-down so they don't download the wrong one
+        gifEffect.addEventListener('change', () => {
+            gifPreviewBox.style.display = 'none';
+            downloadGifBtn.style.display = 'none';
+            modalGifBtn.innerText = "Generate GIF Preview";
+        });
+
+        modalGifBtn.addEventListener('click', () => {
+            if (!gifWorkerUrl) return alert("GIF Engine is still loading, please wait 2 seconds.");
+
+            modalGifBtn.innerText = "⏳ Rendering Frames... (Please wait)";
+            modalGifBtn.style.pointerEvents = 'none';
+            
+            // Hide previous preview while rendering
+            gifPreviewBox.style.display = 'none';
+            downloadGifBtn.style.display = 'none';
+
+            const lines = output.value.split('\n');
+            const effect = gifEffect.value;
+            
+            // Set frame count based on effect
+            let framesCount = 1;
+            let delayTime = 100;
+            if (effect === 'wave') { framesCount = 15; delayTime = 100; }
+            if (effect === 'glitch') { framesCount = 10; delayTime = 150; }
+            if (effect === 'fade') { framesCount = 20; delayTime = 80; }
+            if (effect === 'matrix') { framesCount = 20; delayTime = 120; }
+            if (effect === 'typewriter') { framesCount = 25; delayTime = 90; }
+            if (effect === 'shake') { framesCount = 8; delayTime = 60; }
+            if (effect === 'rgb') { framesCount = 24; delayTime = 70; }
+            if (effect === 'crt') { framesCount = 15; delayTime = 90; }
+
+            const gif = new GIF({
+                workers: 2,
+                quality: 10,
+                workerScript: gifWorkerUrl
+            });
+
+            // Generate frames and add to GIF
+            for (let i = 0; i < framesCount; i++) {
+                const frameCanvas = drawTextToCanvas(lines, effect, i, framesCount);
+                gif.addFrame(frameCanvas, {delay: delayTime});
+            }
+
+            gif.on('finished', function(blob) {
+                // Free memory of the old GIF URL if the user is rendering multiple times
+                if (currentGifBlobUrl) URL.revokeObjectURL(currentGifBlobUrl);
+                
+                currentGifBlobUrl = URL.createObjectURL(blob);
+                
+                // Show Preview Image & Download Button
+                gifPreviewImg.src = currentGifBlobUrl;
+                gifPreviewBox.style.display = 'block';
+                downloadGifBtn.style.display = 'flex';
+                
+                // Update Generate Button
+                modalGifBtn.innerText = "🔄 Re-Generate Preview";
+                modalGifBtn.style.pointerEvents = 'auto';
+            });
+
+            gif.render();
+        });
+
+        // 5d. Actual Download Button for the generated GIF
+        downloadGifBtn.addEventListener('click', () => {
+            if (!currentGifBlobUrl) return;
+            const a = document.createElement('a');
+            a.download = 'DotArt_Animated.gif';
+            a.href = currentGifBlobUrl;
+            a.click();
+        });
+    </script>
+</body>
+</html>
+    
+    ⠀⠀⠐⠠⠀⠀⢀⠂⠀⠀⠀⡂⠄⠀⠀⠂⠄⠀⠀⡐⠀⠀⠀⡐⢀⠀⠀⢐⠀⠀⠀⠐⠠⠀⠀⠐⠠⠀⠀⢀⠂⠀⠀⢀⠂⡀⠀⠀⠂⠄⠀⠀⠂⠄⠀⠀⡐⠀⠀⠀⡐⠀⠀⠀⢐⠠⠀⠀⠐⠠⠀⠀⢀⠂⠀⠀⢀⠂⠀⠀⠀⡂⠄⠀⠀⠂⠄⠀⠀⡐⠀⠀⠀⡐⢀⠀⠀⢐⠠⠀
+⠐⢈⠀⠀⢐⠁⡀⠀⠨⢈⠀⠀⠠⠈⠄⠀⠐⡈⠄⠀⠈⠄⡁⠀⠀⠄⠅⠀⠀⠡⠁⡀⠀⢂⠡⠀⠀⠨⠐⠀⠀⠨⠈⠀⠀⠠⠈⠄⠀⠐⡈⠄⠀⠠⠁⠂⠀⠈⠨⠀⠀⠀⠅⡁⠀⠀⠐⡈⠀⠀⠂⠡⠀⠀⠁⠅⠀⠀⠨⢈⠀⠀⠀⠌⡀⠀⠐⡈⠄⠀⠈⠨⠀⠀⠀⠄⠡⠀⠀⠠
+⠀⠀⠠⠡⠀⠀⠠⠨⠀⠀⠀⠅⠄⠀⠠⢁⠂⠀⠀⠌⡀⠀⠀⢂⠁⠀⠀⠌⡐⠀⠀⠄⠡⠀⠀⢐⠁⡀⠀⠨⠐⠀⠀⠡⢈⠀⠀⠠⢁⠂⠀⠀⠌⠄⠀⠈⠄⠅⠀⠀⠅⡁⠀⠀⠨⠐⠀⠀⠨⠐⠀⠀⠨⠐⠀⠀⠁⠅⡀⠀⠀⠅⠂⠀⠀⠅⠂⠀⠀⠌⠄⠀⠀⠅⢂⠀⠀⡂⠌⠀
+⠠⢁⠀⠀⠄⠅⠀⠀⢐⢈⠀⠀⠠⠁⠂⠀⠀⡂⠁⠀⠀⠌⠄⠀⠀⠅⠂⠀⠀⠄⠡⠀⠀⠂⠌⠀⠀⠠⠁⠄⠀⠁⠅⡀⠀⠠⠁⠂⠀⠀⡂⠁⠀⠀⠅⠂⠀⠠⠨⢀⠀⠀⠌⠐⠀⠀⠌⡐⠀⠀⠡⢈⠀⠀⠨⢈⠀⠀⠠⠨⠀⠀⠠⠁⠂⠀⠠⠁⡂⠀⠀⠅⡈⠀⠀⠄⡁⠀⠀⡐
+⠀⠀⠠⢁⠀⠀⠁⠅⠀⠀⠀⠅⠂⠀⠨⠐⠀⠀⠈⠄⡁⠀⠀⢊⠠⠀⠈⠄⠡⠀⠀⢂⠡⠀⠀⠂⠌⠀⠀⢐⢈⠀⠀⠠⠨⠀⠀⠨⢀⠁⠀⠈⠄⡁⠀⠠⠁⡂⠀⠀⠄⠡⠀⠀⠅⠌⠀⠀⠠⠡⠀⠀⠠⠡⠀⠀⠠⠁⠂⠀⠈⠄⡁⠀⠨⠠⠁⠀⠀⢂⠁⠀⠀⠌⠠⠀⠀⢂⠁⠀
+⠐⡈⠀⠀⠠⢁⠂⠀⠡⢈⠀⠀⠨⠐⠀⠀⠁⠌⡀⠀⠀⡂⡁⠀⠀⡐⠄⠀⠐⠠⠁⠀⠀⠄⠡⠀⠀⠡⢈⠀⠀⠠⠁⠄⠀⠠⢁⠂⠀⢀⠂⠂⠀⠀⡂⠂⠀⠀⡂⢁⠀⠀⡂⡁⠀⠀⠂⠌⠀⠀⢂⠡⠀⠀⠨⠐⠀⠈⠠⠨⠀⠀⢀⠂⠂⠀⠀⠅⠂⠀⠀⡊⢀⠀⠀⡂⡁⠀⠀⠂
+⠀⠀⢐⢈⠀⠀⢀⠂⠄⠀⠠⢁⠂⠀⠁⠌⡀⠀⠠⠈⠄⠀⠀⡐⠄⠀⠀⠌⠄⠀⠈⡐⠐⠀⠀⠌⡐⠀⠀⢐⠐⠀⠀⠂⠌⠀⠀⢀⠂⠄⠀⢈⢐⠀⠀⠀⠅⠂⠀⠀⡐⠠⠀⠀⠄⠅⠀⠀⡁⡂⠀⠀⠠⠡⠀⠀⢁⠂⠄⠀⠠⠡⠀⠀⢈⢐⠀⠀⢈⢐⠀⠀⠀⠄⡁⠀⠀⡐⡈⠀
+⠐⠐⠀⠀⠐⡈⠀⠀⢐⠐⠀⠀⢀⠂⠂⠀⠠⠈⠄⠀⠐⡐⢀⠀⠀⡂⡁⠀⠀⠅⠂⠀⠀⡁⡂⠀⠀⠄⠅⠀⠀⠨⠐⠀⠀⠡⢈⠀⠀⠐⡐⠀⠀⠀⠅⠂⠀⠠⢁⠂⠀⠀⢂⠂⠀⠀⡁⡂⠀⠀⢐⢈⠀⠀⢐⢁⠀⠀⢐⢈⠀⠀⠠⠡⠀⠀⠀⠅⠂⠀⠀⠌⠄⠀⠀⡂⠂⠀⠀⢐
+⠀⠁⢐⠐⠀⠀⢐⢈⠀⠀⠁⡂⠄⠀⠁⡂⠂⠁⠀⡂⠁⠀⠀⡐⡀⠀⠀⢂⠁⠀⠁⠄⠡⠀⠀⠂⡁⠀⠀⢁⠂⠄⠈⠐⡈⠀⠀⠐⠠⠁⠀⠐⠠⠁⠀⢈⠐⡀⠀⠀⡂⠌⠀⠀⠌⠄⠀⠀⡐⢐⠀⠀⠐⡈⠀⠀⠐⡈⠀⠀⠐⡈⠄⠀⢈⢐⠀⠈⠀⢂⠂⠀⠐⡈⠄⠀⠈⠠⠂⠀
+⢀⠂⠀⠀⠂⠌⠀⠀⢀⠂⠄⠀⢀⠂⠄⠀⢀⠂⠄⠀⠁⡐⡀⠀⠀⡂⠂⠀⠀⠅⡐⠈⠀⢐⠠⠀⠀⢁⢂⠀⠀⡐⣀⣂⣄⣬⣐⣌⣀⣐⡐⠀⠁⠐⢐⠀⠀⢀⠂⡂⠀⠀⡂⠐⠀⠀⢂⠂⠀⠀⡀⡂⠀⠀⡐⢐⠀⠀⢐⠐⠀⠀⢀⠂⠄⠀⠐⢐⠈⠀⠀⡂⠂⠀⠀⢂⠂⠁⠀⢂
+⠀⠀⢁⠂⠁⠈⢀⢂⠀⠀⢐⢀⠂⠀⠐⡐⠀⠀⠐⡐⠀⠀⠀⡂⠂⠀⠈⠠⠂⠀⠀⠄⢂⢀⢠⣰⡴⣶⢶⣟⣿⣟⣿⣯⣿⢾⣿⣽⣟⣯⣿⢿⣯⡿⣷⣷⣶⣄⡀⠀⡂⠄⠀⠁⡐⠐⠀⠈⢀⢂⠀⠀⠨⠠⠀⠀⢀⠂⠄⠀⢁⢐⠀⠀⠐⡀⠂⠀⠀⡂⠄⠀⠐⢐⠈⠀⠀⢂⠐⠀
+⢀⠂⠀⠀⢂⠐⠀⠀⠐⡐⠀⠀⢀⠂⠄⠀⠐⡐⠀⠀⢁⢐⠀⠀⠐⢐⠀⠁⠀⣂⣢⣼⣾⢾⡿⣯⣿⣟⣿⣻⣽⣯⣷⡿⣾⡿⣷⢿⣽⢿⣽⡿⣷⢿⡿⣾⢷⣿⣻⣷⣦⣦⣐⣀⢀⠈⡀⢂⠀⠀⡀⡂⠀⠐⢀⠂⠄⠀⠂⡐⠀⠀⢀⠂⠂⠀⠁⡐⡀⠀⢀⢂⠐⠀⠀⡂⠐⠀⠀⢂
+⠀⠈⢀⢂⠀⠈⢀⠂⠄⠀⢐⠠⠀⠀⢐⢀⠂⠀⠁⡐⠀⠀⠐⢐⠈⠀⠀⣢⣾⡾⣟⣿⡾⣿⣟⣿⢷⣟⣯⣿⣻⣾⡯⢿⣻⣽⣿⣻⣟⣿⣽⣟⣿⣻⣟⣿⣻⣽⡿⣾⢷⣟⣿⣟⣿⢷⣾⢦⣦⡤⡀⠀⠂⡂⠀⠀⢂⠐⠀⠀⢐⠠⠀⠈⠀⡂⠄⠀⠀⡂⠄⠀⠀⡂⠄⠀⠁⡐⠠⠀
+⠠⠐⠀⠀⢐⠠⠀⠈⠠⠐⠀⠀⢁⠐⡀⠀⢀⠂⠄⠈⠀⡂⡐⠀⢀⣢⣾⣿⡷⣿⡿⣯⣿⣯⣿⣽⢿⣻⣽⣯⣿⢾⢟⠈⠻⠻⣺⢿⣽⢿⣾⣻⣽⣯⡿⣯⣿⢯⣿⣻⣟⣯⣷⣿⣻⣿⣽⢿⣯⣿⢿⣟⣦⣄⠡⠐⠀⠈⢀⠂⠄⠀⢁⠐⡀⠀⠐⡀⠂⠀⠀⡂⠄⠀⠐⡀⢂⠀⠁⡀
+⠀⠁⡀⡂⠀⠀⢂⠐⠀⠁⠐⠠⠀⠀⠠⠐⠀⠈⠀⠄⠂⠀⢀⣴⣯⡿⣯⣷⣿⣟⣿⣯⣷⡿⣾⣻⣿⣻⣯⣷⡿⣶⡤⢀⠢⣿⣽⢿⣻⣿⣽⣯⡿⣷⡿⣿⣽⢿⣯⡿⣯⣿⣻⣾⢿⣾⣻⣟⣷⣿⣻⣟⣯⣿⢿⣮⡄⡂⠀⠈⠀⠄⠄⠀⠠⠐⡀⠀⢁⠐⡀⠀⠐⡀⠂⠀⠀⠄⠄⠀
+⠠⢀⠀⠀⢂⠐⠀⠈⠠⠐⠈⠀⢁⠐⠈⠈⢀⠐⡀⠁⠐⣐⣿⣯⣷⣿⢿⡷⣿⣽⢷⡿⣾⣟⣿⣽⣾⢿⣽⣾⢿⣻⣮⣾⣷⣮⡿⣟⣿⢷⡿⣾⣟⣯⣿⢿⣾⢿⣷⢿⣿⣽⢿⣾⣟⣯⣿⣽⡷⣿⣽⢿⣽⣟⣿⣽⢿⣮⡀⢂⠈⠀⢐⠠⠀⠁⠀⠄⠄⠀⢀⠂⠄⠀⠁⡐⡀⠁⠀⢂
+⠀⠂⠠⠐⠀⠈⠠⠐⠈⠈⠀⠄⠄⠈⠠⠠⠀⠐⠀⠄⣰⣞⣷⣿⣳⣿⣟⣿⣻⣾⡿⣟⣯⣿⣽⢿⣾⢿⣻⣾⡿⣟⣯⣷⣿⢾⣿⣻⣟⣿⣻⣯⡿⣯⣿⣻⣽⣿⣽⢿⡷⣿⣻⡷⣿⣯⣷⣿⣻⣯⣿⣻⣽⣯⣿⡾⣿⣻⣮⠀⢀⢂⠀⠀⠁⠄⡈⠀⠁⠄⠄⠈⠀⡐⡀⠀⠠⢀⠂⠀
+⠀⠄⠀⠁⠄⢂⠈⠈⠀⠄⠈⠀⠠⠠⠐⠈⠀⠄⠄⢡⣿⣽⢿⣾⣻⡷⣿⣽⣯⣷⣿⢿⣻⣽⣾⣿⣻⣟⣿⢷⣿⢿⣻⣽⣾⡿⣯⣿⣽⣯⡿⣷⡿⣿⣽⢿⣽⣾⣟⣿⣻⣿⣽⢿⣻⣾⢷⣿⣽⡷⣿⣻⣽⡷⣟⣿⣻⣽⣟⣧⡀⠀⢐⠠⠈⠀⠠⠠⠀⠁⠠⠠⢀⠀⠀⡂⠄⠀⠈⡀
+⠈⠈⢀⠄⠈⠀⠠⢀⠈⠈⠠⠠⠈⠀⠂⠠⠀⠁⠀⢮⣷⡿⣿⣽⣯⣿⣯⣷⡿⣷⢿⣿⣻⣯⣷⣿⣽⣯⡿⣿⣽⡿⣟⣯⣷⣿⣟⣷⣿⢾⣟⣯⣿⢿⣾⢿⣻⣾⣯⣿⣽⣾⣟⣿⣻⣽⡿⣷⣟⣿⣻⣽⣯⣿⣟⣿⣽⣯⣿⣻⡿⣮⡀⠀⠂⠄⠂⠁⠁⠠⢀⠈⠀⠄⠄⠐⠀⠂⠄⠀
+⢀⠠⠀⠂⠠⠠⠈⠀⠄⠠⠀⠁⠠⠠⠈⠀⠁⠄⡈⢸⣯⣿⢿⡾⣷⢿⡾⣷⡿⣟⣿⣽⣯⢿⢳⠛⠚⠑⠍⠉⠈⢈⠠⠀⠀⢀⢀⠀⠀⢁⢈⠈⠈⢉⠩⠙⠙⠓⠟⠾⢿⢾⣯⡿⣯⣿⣻⣯⣿⣽⢿⣽⡷⣿⣽⢿⣾⣻⣾⣟⣿⣻⡿⣆⠌⠀⠁⠠⠀⠁⠠⠀⠄⠈⠀⠄⡀⠁⠁⠠
+⠀⠂⠠⢀⠈⠐⠀⠄⠈⠈⠀⠄⡈⠀⢁⠠⠈⠐⢠⡾⣿⢾⣿⣻⣟⣿⣟⣿⣻⣟⠯⠓⡁⠂⠀⠄⡀⠁⠁⠠⠠⠀⠂⠠⠠⠐⠀⠂⠠⠀⠂⠠⠠⠀⠂⠁⡀⠄⠈⠐⠀⠌⠈⠛⠻⢽⢿⡾⣷⢿⣻⣽⣟⣿⡾⣿⣯⡿⣾⣯⣿⣽⢿⣻⡆⠠⠈⠈⠠⠠⠀⠁⠂⠠⢀⠁⠠⠠⠀⠁
+⢀⢀⠈⠀⠠⢀⠈⠈⠀⠄⡈⠐⠀⠠⠀⠂⠠⢀⢺⣿⣻⣿⣽⣯⡿⣷⣟⣯⠏⢂⢀⠁⠀⠄⡀⠂⠐⠀⠄⠈⠐⢀⠠⠀⠁⠠⠀⠄⠁⠂⡀⠄⠈⠠⠀⠄⠐⠀⠄⡀⠁⠈⡀⠄⠈⠀⡈⡙⢿⣿⣻⣯⡿⣷⡿⣿⢾⣟⣿⡾⣷⢿⣿⣻⣷⠁⠠⠀⠄⠈⠠⠠⠀⠁⠂⢀⠠⠈⠐⠀
+⠀⠠⠀⠄⠈⠀⠄⡀⠁⠁⢀⢀⠈⠐⠀⠄⠐⠀⢹⣯⣿⢾⡷⣟⣿⣯⡿⠡⠀⠂⠀⠠⠀⠂⠐⠀⠄⠈⠈⡀⠄⠀⠂⠠⠀⠌⠀⢁⢀⠀⠂⠠⠀⠄⠁⠂⡀⡀⠁⠠⠀⠄⠂⠐⠀⠄⠐⠀⡘⣽⣯⣷⣿⣟⣿⣻⣟⣯⣷⣿⢿⣻⣽⡿⣾⣧⠀⠁⢁⠀⠄⠈⠐⡀⠄⠂⠀⠄⡀⠁
+⢀⢀⠈⠀⡁⠠⠐⠀⢁⠀⠄⠂⠀⠄⠈⠀⢁⠠⠐⣻⣽⣿⣻⣿⣻⣾⡠⡁⠈⡀⡀⠁⠁⠄⡀⠁⠈⠠⢀⠐⠈⠀⠄⠈⠈⢀⠠⠀⠂⠀⠄⡀⠁⠂⡀⠄⠂⢀⢄⣀⢅⣢⡴⣦⣅⡁⠄⡀⠐⠘⣽⣾⣷⢿⣯⣿⣽⣿⣽⣾⡿⣟⣯⣿⢿⣾⠠⠀⠄⠈⠠⠀⠄⠂⠐⢀⠀⠁⠠⠀
+⠀⠂⠀⠄⠀⠁⠄⡀⠐⠈⢀⠀⡈⠈⠠⢀⠐⠐⠀⡈⢷⣿⣻⣾⣟⣷⡿⣏⠀⠐⢀⣄⣄⣂⡂⠠⣈⡐⢀⣀⡠⣈⣈⠠⢀⠐⠀⢁⢀⠈⠐⣤⣶⣗⣷⢿⣾⢿⣽⣯⣿⣯⡿⣟⣯⣿⢷⣔⢀⢀⢹⣿⢾⡿⣷⢿⡾⣷⣟⣷⣿⢿⣻⣽⣿⣽⠅⠁⠂⠠⠀⠁⠂⡀⠄⠂⠈⡀⠄⠈
+⠀⡀⠈⠄⢁⢀⠐⠐⢀⢀⠀⠂⢀⢀⠐⠐⠀⡀⡀⠂⣼⣿⣽⣾⣯⣷⣿⠇⢈⣤⣷⡿⣯⣿⣻⣿⢿⣽⡿⣟⣿⣯⣿⣮⠄⢀⢀⠠⠐⠀⢸⣟⣷⣟⣿⣻⣽⣿⣻⣾⢷⣟⣿⣟⣿⣽⢿⣻⣷⣦⢾⣽⣿⣻⣟⣿⣟⣯⣿⣽⣾⡿⣟⣿⣾⣻⢀⠀⠄⠁⢁⢀⠀⠂⠠⢀⠀⠐⠐⠀
+⠐⠐⠀⡀⠀⠂⢀⢀⠀⠂⢀⠀⠄⠂⢀⢀⠀⠂⢀⢼⡷⣿⢾⡷⣟⣷⡿⡅⠨⢷⢿⡛⢙⢩⢽⣯⣿⣯⣿⣟⣿⢾⡷⣿⡇⠐⠀⠄⢀⠠⣿⢿⣽⣯⡿⡯⢿⡾⣿⣽⣟⣯⣷⣿⣻⣾⡿⣟⣷⣿⣻⡿⣾⣻⣽⣷⢿⣯⡿⣷⣟⣿⣟⣿⡾⡻⠛⠛⠛⠒⠂⠐⠀⠄⡀⠂⠈⡀⢀⠁
+⠀⡀⠂⠂⠁⡀⠐⠀⡀⡀⠐⠈⢀⢀⠀⠂⠠⢀⢴⡿⣟⣿⣻⣿⣻⣯⣿⠀⠂⡀⣠⣲⣯⣿⣟⣷⢿⡾⡗⠉⠉⠻⠫⠑⠈⢀⢀⠐⠠⠈⢽⡿⣏⠄⢉⠈⠈⢛⣛⣚⣠⡽⣷⣟⣯⣷⣿⢿⣻⣾⢿⣽⣟⣯⣿⣾⢿⣯⡿⣯⡿⣷⣟⣷⠻⡶⡄⢀⠀⠌⠠⢀⠀⠅⠀⡀⡀⠂⠂⠀
+⠐⠀⡀⡀⠐⠐⢀⠀⠄⠂⠁⢀⠀⠂⢀⢀⣦⣿⣟⣿⣟⣿⣽⣾⢿⣽⡮⠀⠀⢼⣯⣿⢷⣏⣂⠈⢋⠙⠀⠂⡀⠨⠐⠀⡀⠀⠂⢀⢀⠀⣾⢿⠟⠈⠀⠂⡀⡀⠌⠈⠄⡀⠂⠙⠹⠙⠞⢿⣟⠽⣟⣯⣿⣯⣷⡿⣟⣷⣿⣟⣿⣯⡿⣷⡅⠈⣗⠐⢀⠀⡀⠂⠐⠀⡀⠂⠄⢀⠀⠁
+⠀⢀⠀⠂⡀⡀⠐⠐⠀⡀⠈⢄⣢⣴⣾⣻⣽⣾⣯⣷⡿⣯⣷⡿⣟⣯⠇⠈⠐⠈⠉⠈⠄⢀⠁⠁⠂⡀⠀⠂⠐⢀⠀⠐⠠⠁⢀⠐⠠⠀⠿⠑⠈⠄⢀⠐⠠⠀⡀⠀⠁⠄⢀⠀⠁⠅⠀⡀⠠⠑⣿⣻⡷⣿⢾⣿⣻⡿⣾⣯⣷⣿⣻⣯⣿⣧⣄⣸⠀⠐⠀⡀⠀⠅⠠⠀⠀⠂⢈⠀
+⠈⠄⢀⠀⠠⠂⢀⣠⣦⢶⢷⢿⡾⣷⣟⣯⣿⢷⣟⣷⡿⣟⣷⣿⢿⣿⠁⡀⡀⠅⠌⠀⡀⠐⠈⡀⢀⠠⠁⠂⢀⠐⠈⢀⠀⠈⠄⠄⠀⠐⠈⠄⣶⣐⠐⠀⡀⠀⠂⢁⠀⡀⠂⠌⠀⡀⠨⠀⡀⣰⣿⣽⢿⣻⣿⣽⣯⡿⣿⢾⡷⣿⣽⣾⡷⣿⢾⣻⣶⣤⣔⡠⠁⡀⠀⠌⠂⢀⠀⠐
+⠀⠀⠐⠈⠐⠒⠋⠊⠀⢀⠈⠌⢻⣯⡿⣯⣿⣻⣯⣿⣻⣿⣻⣾⢿⣻⠄⠂⠄⠀⢀⠐⠠⠀⡀⠐⠠⠀⢀⠈⠄⢀⠀⠐⠈⡀⠀⡀⠅⠂⠀⡀⠍⠳⠂⡀⠂⢁⠀⡀⠂⠄⢀⠀⠂⠐⠀⠀⣴⣟⣷⡿⣟⣿⢷⡿⣾⣟⣿⣻⣟⣯⣷⣿⣻⣟⣿⢿⣽⣯⣿⣝⠱⠄⠁⡀⠀⠂⠌⠀
+⠈⡈⢀⠀⠡⠁⠂⠀⠁⡂⡀⢆⡀⢯⣿⢿⣽⣯⣷⣿⣻⣾⢿⣽⡿⣿⡇⠀⠀⠌⠠⠀⠀⠂⠂⡀⢀⠨⠀⡀⠀⠐⢈⢄⣄⣄⢅⡀⣀⢠⣥⣤⣤⣴⣥⣀⠀⠀⠂⠄⠀⠀⠂⠐⢀⢀⣥⣿⣻⣾⣯⣿⣟⣿⣻⣟⣯⣿⣽⢿⣽⣿⣽⣾⢿⣽⣟⣿⣽⡞⠈⠉⠷⣂⠀⠂⡁⢀⠀⠌
+⠀⠀⠐⠈⠀⠀⠨⠈⡀⠘⠲⣼⡿⣿⣽⢿⡷⣟⣷⣿⣽⣾⡿⣯⣿⣯⣿⡨⠐⠀⠀⠨⠐⠀⢀⠐⠠⠀⠀⠠⠁⠂⣟⡟⠽⢟⠛⢿⣻⠏⢋⠛⢛⣽⣯⣿⠂⠅⠀⠀⠅⠡⢀⣈⠄⢾⡷⣟⣯⣷⣿⢾⣯⣿⣽⢿⣽⣷⢿⣟⣿⢾⣻⣾⢿⣯⣿⣽⣷⡇⠅⠀⠀⠊⠣⠀⢀⠐⠠⠀
+⠠⠡⠀⢀⠡⠡⠀⠀⠐⢈⠀⠀⠩⣿⣾⢿⣟⣿⣻⣾⣻⣾⣟⣿⢷⣻⣷⣧⠀⠌⠐⠀⠀⡁⠂⠀⡀⠨⠈⠀⠀⡈⠪⠃⠀⡀⠢⠀⠀⢀⠪⢛⠀⠉⠌⠈⠀⠀⠅⠁⠀⢠⣿⣻⡇⠸⣿⢿⣻⣽⣾⣿⣻⣾⣻⣿⣽⣾⣿⣻⣽⣿⣻⣽⡿⣷⢿⡾⣷⣗⠀⠅⢁⠀⡀⠅⠂⠀⠀⠂
+⠀⠀⠈⠄⠀⠀⠠⠑⠀⠀⠠⠡⢨⣿⡾⣿⣻⣽⣿⡽⣿⢾⣯⡿⣟⣿⢷⡿⡆⠀⡀⠡⠁⠀⠀⠡⠐⠀⠀⠁⠅⠀⠀⠈⣔⣶⠀⠈⠨⠀⣰⣿⣿⣖⣄⢈⠌⠠⠀⢀⠑⢈⣿⡻⠠⠁⢝⣿⣟⣯⣷⡿⣯⣿⣽⣾⢿⡾⣯⣿⣽⣾⣟⣯⣿⣟⣿⣻⣯⣷⠁⠀⠀⡐⢀⠀⠀⠡⠁⠀
+⠠⢁⠀⠀⠌⢐⠀⠀⠨⢈⠀⠀⢐⣿⣻⣟⣯⣿⡾⣟⣿⣻⣷⡿⣿⣻⣟⣿⣯⠂⠄⠀⠀⠡⢁⠀⠀⠨⠠⠁⠀⢈⢌⠀⣿⡯⠂⡁⠀⠠⠙⠷⡿⣽⣟⣿⢾⣶⣬⣤⡀⢈⢑⣠⣀⢀⢂⣯⡿⣯⣿⣻⡿⣾⣻⣾⢿⣻⣯⣷⡿⣷⢿⣯⣷⡿⣯⣿⣽⣾⠌⠄⡁⠀⠀⠄⠅⠀⠀⠅
+⠀⠀⠨⠐⠀⠀⠠⢁⣂⠀⠠⠁⠄⣿⣽⢿⣽⣷⡿⣿⣻⣽⣷⢿⣟⣯⣿⢷⡿⣆⠀⠁⠅⠀⠀⠄⠅⠀⣄⣶⣽⣾⠏⠡⠙⣨⡴⣶⢮⣖⣷⣳⣮⣮⣿⣽⣿⣽⣯⣿⣻⣧⣖⣿⣽⣿⣽⣷⡿⣿⣽⣯⣿⣻⣽⣟⣿⣻⣽⣷⡿⣟⣿⣽⣾⢿⣻⣷⣟⣿⡁⠀⠀⠌⠠⠀⠀⠡⠁⠀
+⠐⡈⠀⠀⠨⠐⠀⢼⣇⠐⡀⠀⣰⡿⣾⢿⣻⣾⣟⣿⣯⣿⣾⢿⣻⣯⣿⣻⣟⣿⣆⠀⠀⠅⠌⠀⣠⣿⡿⡯⠗⣛⣔⣴⡿⡯⠿⢟⠿⠯⡟⠯⠳⠿⡾⡷⣿⠾⢷⢿⣽⣾⢿⣽⣾⡷⣿⡾⣟⣿⡾⣷⣟⣿⣽⣯⡿⣯⣿⡾⣿⣻⣯⣿⣾⢿⣟⣷⣟⣯⠠⠈⠄⠀⠀⡂⢁⠀⠀⠡
+⠀⠀⠠⠡⠀⠀⢁⠱⢿⣳⡶⣾⣟⣿⡻⠟⢿⢷⣟⣷⡿⣾⣻⣟⣿⣽⣾⢿⣽⣷⢿⣷⣅⠀⠀⢂⢽⣷⢿⡋⡈⠊⠉⢁⠂⠄⠀⠐⡈⠀⢀⠠⡨⣀⣄⣄⣂⢁⠀⢻⣯⣿⣻⡿⣾⣟⣯⣿⣟⣯⣿⣯⣿⣽⣾⣷⢿⣟⣷⡿⣟⣯⣿⣾⣻⣟⣯⣿⣽⠇⠄⠀⠀⠅⡁⠀⠀⠄⠅⠀
+⠐⡐⠀⠀⢂⠡⠀⠀⠨⢈⠉⠉⣱⠡⠂⠀⢈⠹⣿⣽⣟⣿⣽⢿⣽⡷⣿⣟⣿⢾⡿⣷⡿⣿⡎⠀⢩⣿⣻⠀⠀⠈⠄⠳⣗⣷⣞⣶⡾⣯⣷⡿⣟⣿⣽⣟⣿⢷⡷⣿⣯⣿⣽⣟⣯⣿⣽⣷⢿⣯⣷⣿⢾⣻⣾⣻⣟⣿⣽⢿⣻⣟⣷⣿⣽⢿⣽⢿⠎⠀⠠⠨⢀⠀⠀⢂⠁⠀⠀⡂
+⠀⠀⢐⠈⠀⠀⠐⡈⠀⠀⠠⢱⣿⡀⠐⡐⠀⣀⣼⣷⢿⣻⣾⡿⣯⣿⣯⣿⣽⢿⣻⣯⣿⢿⡀⡂⠌⠙⠃⡀⡂⠄⠀⠂⠌⠙⠙⠹⢙⠋⠓⢛⠛⠯⢷⢿⠻⡻⠛⡿⣾⢷⣿⣽⣯⣷⣿⡾⣿⣻⣾⣻⣿⣻⣽⣯⣿⣽⣾⡿⣟⣯⣿⣾⣻⡿⢽⡏⠀⡂⠂⠀⠀⡐⠈⠀⠀⡁⢂⠀
+⠐⡐⠀⠀⢁⠂⠄⠀⠨⠐⠀⠘⣯⣷⣦⣄⣐⣿⣽⣾⡿⣟⣷⡿⣟⣷⡿⣾⣻⣿⣻⣽⣾⣿⡯⠀⠀⡁⡂⠀⠀⢀⠢⠀⠀⠡⠈⠄⠀⠀⠅⠄⠀⠈⠄⠂⠀⠀⢄⣿⣟⣿⢷⡿⣾⣻⣾⣟⣿⣯⣿⣽⣾⢿⣽⡷⣟⣷⣿⣻⣿⣻⡷⣿⣝⣀⠸⡇⡁⠀⠠⠨⠀⠀⠈⠠⠂⠀⠀⠄
+⠀⠀⢐⠠⠀⠀⢐⠐⠀⠈⠠⡂⠙⢯⣷⡿⣟⣯⣿⡾⣿⣟⣯⣿⢿⣯⡿⣿⣽⣾⣟⣯⣷⡿⣇⢀⢢⣿⣇⠐⡈⠀⠀⠠⠡⠀⠁⢀⢂⠈⠀⠐⢐⠀⠀⢁⢐⣤⣿⣳⣿⣻⣟⣿⣻⣯⣷⡿⣷⢿⣾⣻⣾⢿⣯⣿⢿⣻⣾⢿⣾⣻⣟⣿⢾⣷⣼⣇⠠⠐⡀⠀⠈⡐⢈⠀⠀⡂⢂⠀
+⢀⠂⠀⠀⡐⢐⠀⠀⠡⠐⠀⠻⣲⣔⣬⣻⣟⣿⢷⣿⣻⣽⣿⣽⢿⡷⣿⣟⣷⣿⣽⢿⣽⣟⣿⢷⣿⣻⣽⣦⡀⠂⡂⠄⠀⠂⡂⠄⠀⢀⠂⠂⢀⣈⣰⣼⡿⣿⢾⣻⣽⣯⣿⣽⣯⣿⢾⣟⣿⣻⣽⡿⣾⣿⣻⣾⢿⣿⣽⢿⣽⣯⣿⣽⡿⣷⢟⡇⠄⠀⠀⡂⠂⠀⠀⡐⡀⠀⠀⠄
+⠀⠈⠐⠠⠀⠀⢐⢀⠂⠈⠀⡂⢹⣿⣽⡷⣿⣻⣿⣽⢿⣽⣾⣻⣟⣿⣯⡿⣷⢿⣾⢿⣯⣿⣽⡿⣯⣿⣽⣾⣟⣷⣤⡴⣔⣤⣄⣤⣢⣤⣬⣾⣟⣯⣿⡾⣟⣿⣟⣿⣯⣷⢿⡷⣿⡾⣿⣻⣽⣿⣽⣟⣿⢾⣯⣿⣻⢷⢿⢻⡿⣾⢷⣟⣿⣻⠅⠂⠀⡂⠂⠀⠈⠄⠂⠀⠀⢂⠂⠀
+⠠⠐⠈⠀⢐⠐⠀⠀⠠⠐⠀⠀⠐⡘⠑⠛⠛⢙⣺⣟⣿⣽⣾⢿⣽⡷⣟⣿⣻⣿⣽⢿⡷⣿⢾⣟⣯⣷⡿⣷⣟⣯⣷⣿⢿⣻⣽⣯⣿⢾⣻⣾⣯⡿⣷⡿⣿⣯⢿⡷⣿⡾⣿⣟⣯⣿⣟⣿⣽⣾⡷⣿⣻⣿⣽⣾⢿⡷⣦⡂⠙⠻⠛⣿⣽⡟⢀⠂⠄⠀⠐⡐⢀⠀⠁⡐⠠⠀⠀⢂
+⠀⠈⠠⠐⠀⠈⠠⠐⠀⠁⠐⡀⠂⠀⢐⠠⠀⢰⣯⣿⣽⢗⢻⣟⣯⣿⣟⣯⣿⣾⣻⣟⣿⣻⣟⣿⣯⣿⣻⣯⡿⣯⣿⣾⢿⣟⣯⣷⡿⣿⣻⡷⣟⣿⣯⣿⣻⣾⢿⣻⣯⣿⣯⣿⣽⣷⢿⣯⣷⢿⣻⣿⣽⣾⢿⡾⣿⣻⡿⡇⢂⠐⣠⡿⠞⡁⠄⠀⠐⡀⠂⠀⢀⢐⠀⠀⠐⡀⡂⠀
+⠠⠐⠈⠀⢐⠠⠀⠁⢐⠀⠂⠈⠀⡂⡀⠀⠡⡿⠽⠚⠉⠠⠀⢿⣯⣷⣿⣻⡷⣿⣽⣯⣿⣽⣯⣷⡿⣾⣻⣷⢿⣟⣷⢿⣻⣟⣯⣿⣻⣿⣽⢿⣻⣷⢿⡾⣿⣽⣿⣻⣽⣾⡷⣟⣷⣿⣻⣷⢿⣿⣻⡷⣿⡾⣿⣻⡿⠽⠋⠅⡀⠘⠉⢄⠁⠀⢀⠂⠄⠀⠁⡐⢀⠀⠈⡀⡂⠀⠀⠄
+⠀⠁⢀⠂⡀⠀⢂⠐⠀⠈⠠⢀⠂⠀⠠⠐⡀⠀⠁⠄⡈⠀⠁⢼⡿⣷⣟⣯⣿⣟⣷⡿⣾⣻⣾⣯⡿⣟⣿⡾⣿⣻⣽⡿⣟⣿⣽⣯⣿⢾⣻⣿⣻⣽⣿⣻⡿⣾⣯⡿⣯⣷⣿⢿⣻⣾⢿⣾⣟⣯⣿⣻⣯⡿⣿⣽⢷⠀⠂⠁⠀⠄⡈⠀⢀⠂⠄⠈⠀⡂⠄⠀⠠⠠⢀⠀⠀⡐⠠⠈
+⠀⠄⠀⠂⠠⠠⠀⠈⠠⢀⠂⠀⠠⢀⠂⠁⠀⠄⠂⠁⠀⠄⡐⠘⣿⣯⡿⣯⣷⡿⣷⡿⣟⣯⣷⣿⣻⣟⣯⣿⣟⣿⣽⢿⣻⣯⣷⣿⣾⢿⣿⣽⣯⣿⢾⣟⣿⣻⡾⣟⣿⣽⣾⡿⣿⣽⢿⡷⣟⣯⣿⣽⣾⢿⣯⡿⣿⠈⠀⠄⡀⠁⠀⠄⡀⠈⠀⠄⠄⠀⠐⠠⠐⠈⠀⠠⠠⠀⠁⡀
+⠈⠈⠠⠀⠂⠁⠠⠠⠈⠀⠠⠠⠈⠀⠠⠀⠄⠁⠠⠠⠀⠁⠀⠄⠨⠺⣿⣻⣷⢿⣟⣿⣟⣿⣽⣾⢿⣽⣟⣷⣿⣽⣾⡿⣟⣯⣷⣿⢾⡿⣷⢿⣾⣻⣟⣯⣿⣽⡿⣟⣯⣿⡾⣟⣯⣿⣟⣿⣟⣿⣽⣾⣟⣿⢷⣿⢿⡆⠈⠀⠠⠠⠈⠀⠠⢀⠂⠁⠠⢀⠂⠁⠠⠠⠀⠁⠠⠠⢀⠀
+⠀⠄⠈⠈⠀⠄⡀⠁⠠⢀⠂⠁⠠⢀⠂⠁⠠⠠⠐⠈⠀⡐⡀⠁⠐⡀⠌⠙⠾⣿⣻⡷⣟⣯⣷⡿⣟⡯⠛⠛⠚⠛⠚⠛⠛⠛⢽⣾⡿⣟⣯⠉⢿⣽⢿⣽⢿⡾⣟⣿⣻⣷⢿⣿⣻⣷⢿⡷⣟⣯⣷⣿⣽⣟⣿⣽⣿⣻⣄⢂⠈⠀⠁⠄⠐⠀⠠⠠⠀⠀⠂⠠⡀⠈⠀⡂⠄⠈⠀⡀
+⠈⠀⠂⠄⠈⠀⠠⠠⠈⠀⠠⢀⠐⠀⠠⠠⠐⠈⠀⠄⠠⠀⠠⠀⠄⠀⠂⠠⠐⠈⠈⠛⠻⢻⣽⣿⣻⡿⣧⣂⠠⠈⠈⢀⠠⠀⠁⢈⠻⢟⣷⠠⠈⣿⣻⣽⣿⣻⣿⣻⣽⣾⡿⣯⣿⡾⣿⣻⣿⣻⣽⣾⡷⣟⣿⢾⡯⡿⣯⡷⡦⡤⠈⠈⠀⠄⠄⠁⠁⠄⡈⠀⠠⠠⠠⠐⠀⠄⠄⠀
+⠀⠄⠈⠀⡁⠄⠁⠂⠠⠠⠐⠀⠠⠠⠀⠁⠠⠀⠄⠁⠂⠠⠀⠁⠁⠄⠠⠁⠈⡀⠄⠁⠁⡀⡀⠈⠉⢉⠋⠃⠐⠀⠄⡀⠂⠠⠠⠀⠐⠀⠄⡀⠁⢈⢻⣽⣾⣟⣷⣿⣻⣷⢿⣟⣷⡿⣟⣯⣿⣽⣯⣷⣿⢿⣻⣿⠐⠀⢀⠠⠀⠀⠁⠄⠈⠐⠀⠄⠄⠁⠀⠄⠄⠈⠀⠄⡀⠈⠀⠄
+⠈⠐⠀⠄⠐⠈⢀⠠⠀⠁⠠⠀⠄⠁⠂⠠⠀⠁⠂⡀⠄⠁⠁⠠⠀⠁⠂⠠⠀⠐⠀⠄⠠⠀⠂⠀⠄⠐⠈⠀⠄⠈⠀⠠⢀⠀⠁⠂⠠⠀⠁⠀⠄⡀⠀⠙⣷⣿⣻⣾⢿⣾⢿⣻⣽⣿⣻⣿⣽⣾⣯⣷⡿⣿⣻⣽⠡⢀⠀⠂⠠⠠⠈⠈⠀⠄⡀⠁⠂⡀⠄⠁⠂⠠⠀⠁⠀⠄⠄⠁
+⢀⠠⠈⠈⢀⠠⠀⠂⠠⠠⠈⠈⢀⠠⠈⠈⠀⠄⠄⠂⠠⠀⠄⠁⠁⠄⡀⠁⠁⠠⢀⠈⠐⢀⢀⠁⠁⠠⢀⠈⠈⠠⠀⠌⠀⠠⠀⠌⠀⠁⠄⡈⠀⠂⠠⠐⠀⠙⠽⠾⣿⣻⣟⣿⣻⣾⢿⡾⣷⡿⣾⣯⡿⣟⢏⠃⠀⠂⠠⠀⠄⠁⠂⠠⠈⠀⠂⡀⠄⠐⠀⠄⡀⠁⠁⠄⠠⠁⠂⢀
+⠀⠂⠀⠄⠐⠀⠂⡀⠄⠁⠠⢀⠀⠂⠠⢀⠈⠐⢀⠀⠄⠁⠂⠠⠀⠁⠠⠀⠄⠁⠂⠀⠄⠂⠀⠄⠠⠈⠀⠄⠠⠈⠈⢀⠠⠈⠈⠀⠄⠈⠀⠄⠠⠀⠁⠂⠠⠀⠂⠁⡀⡉⠙⠙⠯⠿⡻⣟⡯⡿⠻⠚⠩⢀⠂⠈⠠⠀⠄⠁⠂⡀⠈⠀⢁⠠⠀⠂⠠⠀⠄⠂⠠⠀⠄⠈⠠⢀⠠⠀
+⢀⠀⠁⠁⠠⠀⠂⠐⢀⢀⠈⠀⠂⡀⠈⠀⠂⡀⠄⠈⠀⠄⡀⠁⢁⠠⠀⠁⢈⢀⠀⠁⠈⡀⡀⠈⠐⢀⠠⠈⠐⢀⠠⠐⠐⠀⠠⠈⠈⠠⠀⠄⠁⢁⢀⠈⠀⢁⠀⠄⠐⠀⠠⠀⠁⠂⡀⡀⠐⠀⠄⠠⠈⠀⠠⢀⠈⠐⢀⠠⠐⠀⢁⠠⠀⠂⠁⡀⡀⠁⠂⡀⡀⠁⠈⡀⠄⠂⠐⠀
+⠀⠈⠠⢀⠁⠈⠠⢀⠀⠂⠀⠄⠐⠀⢁⠠⠐⠐⠀⠠⠈⠐⠀⡀⠄⠀⠁⠄⡀⠐⠈⠀⠄⠐⠐⠀⠄⠂⠂⠀⠄⠐⠀⠄⢀⠈⠀⢁⠀⠄⠁⠂⡀⠄⠐⠀⠄⡀⠊⠀⠄⡀⠁⠁⠄⡀⠐⠀⠄⡀⠈⠐⠀⠄⠈⠀⠄⡀⠄⠂⠠⢀⠀⠂⠁⡀⡀⠂⠀⠄⡀⠂⠀⠄⡀⠂⠂⢀⠠⠈
+⢀⠀⠁⠂⢀⠠⠈⠠⠀⡀⡈⠈⠀⠄⠐⠐⠀⡀⡀⠁⠂⡀⡀⠂⠂⡀⠄⠁⠄⢀⢀⠁⠁⡀⡀⠈⠐⢀⠀⡈⠐⢀⠀⠄⠁⠠⢀⠐⠈⢀⠀⠄⠂⠠⢀⠀⠡⠀⡀⡀⠂⠐⢀⠀⠂⠂⢀⠀⠂⠐⢀⢀⠁⠌⠀⠄⠐⠀⠄⢀⠐⠀⠂⡀⡀⠂⢀⢀⠀⠁⢀⢀⠀⠁⠄⢀⠀⠂⠐⠀
+⠠⠈⡀⡀⠐⠐⢀⢀⠐⠀⠄⢀⠈⠈⢀⢀⠀⠂⢀⢀⠐⠀⠂⢀⠀⠐⠀⠄⠀⠂⠠⠀⡀⠐⠐⢀⠠⠐⠀⡀⡀⠐⠈⢀⢀⠈⠠⠀⡀⠠⠈⢀⢀⠀⠂⠂⢀⠀⠂⢀⢀⠀⠂⠈⡀⠀⠂⠁⡀⡀⠂⠠⠀⡀⠈⠈⡀⡀⠐⠐⠀⡀⠐⠀⠄⢀⠀⠐⠀⠄⡀⠂⠈⡀⠀⠂⠈⡀⢀⠁
+⠀⢀⠀⠂⡀⡀⠐⠀⡀⡀⠐⠐⢀⠠⠐⠀⠂⡀⡀⠂⠄⢀⠐⠠⠈⢀⠀⠁⢁⢀⠀⠂⠂⡀⡀⠂⠐⠀⡀⠀⠂⠠⢀⠐⠀⠄⢀⠐⠀⢁⠀⡀⠐⢀⢀⠀⠡⠀⠄⡀⠐⠈⢀⠀⠂⠁⡀⡀⠐⠠⠀⡀⠐⠀⡁⢀⠀⠂⠠⢀⠐⠀⢁⠀⠐⠐⠀⠄⡈⠐⠀⡀⡀⠂⠁⡀⡀⠂⠂⠀
+⠈⠠⠀⡀⠀⠂⠄⠀⠄⠂⠠⢀⠀⠂⠄⢀⠐⠀⠄⢀⠀⠂⠂⢀⠀⠂⢈⠀⡀⠐⠈⢀⠀⠀⠂⡀⢀⠁⠐⢀⢀⠨⠀⢀⢀⠐⠐⠀⡀⠀⠂⠄⢀⠠⠐⠀⡀⡀⠁⠄⢀⠀⠂⠈⡀⢀⠐⠐⠀⡀⠐⠀⡁⢀⠐⠠⠀⡀⠈⠄⢀⢀⠐⠈⢀⢀⠠⠁⢀⠀⡀⠂⠠⠀⡀⠂⠄⢀⠀⠁
+⠀⢀⠐⠐⢀⢀⠨⠈⠀⡀⠐⠀⠂⢀⠐⠐⠀⡀⠐⠀⠂⡀⠐⠐⠀⠄⠀⠂⠐⢀⠀⠂⢈⠀⡀⠐⠠⠀⡀⠐⠠⠀⢀⠐⠠⠀⡀⠐⠠⠁⢀⠐⠀⠂⢀⠀⠂⠄⢀⠀⠂⠈⡀⠀⠂⠂⢀⠀⠂⠂⡀⡀⠐⠠⠀⡀⠐⠈⢀⠀⡀⠂⢀⢀⠀⠂⡀⢀⠀⠂⠄⢀⠀⠡⠀⡀⠀⠂⢈⠀
+⠈⠄⢀⠀⠐⠠⠀⢀⠐⠐⢀⠀⠨⠠⠀⡀⠐⠠⠁⢀⠐⠠⠁⢀⠀⠅⠁⡀⠐⠀⢂⢀⠀⠐⠐⠀⡀⠂⠂⠁⠀⠈⠄⢀⠀⡀⠂⠁⠀⠐⠀⠂⡀⠈⠄⠂⠀⡀⠂⠂⡀⢀⠂⠅⢀⠀⠂⠌⠀⢀⠠⠂⢀⠀⡐⠐⢀⠀⠐⠐⠀⡀⠀⠂⠄⢀⠀⠂⠂⡀⠀⠂⠂⡀⠀⠂⠡⠀⡀⠐
+⠀⠀⠐⠈⢀⠀⠐⠠⠀⡀⠐⠈⢀⠀⠀⠂⠁⠀⡀⠂⠂⠀⠀⠂⠂⠀⡀⠄⠅⢀⠀⠄⠌⠀⡀⠡⠐⠀⢀⠨⠈⢀⠀⡀⠂⡀⢀⠈⠌⢀⠀⡐⠠⠁⠀⠀⠡⠀⡀⠀⠂⠂⠀⠀⠐⠈⠀⠀⠨⠀⠀⠀⠐⠠⠀⢀⠠⠨⠀⡀⠐⠠⠁⠀⠐⠐⢀⠀⡀⠂⢁⠀⡀⠂⢁⠀⡀⠂⠐⠀
+⠈⡈⠀⡀⠐⢈⠀⡀⠐⠐⠀⡀⠐⠈⠄⢀⠨⠐⠀⢀⠠⠁⠅⠀⡀⠅⠄⠀⠀⠐⠠⠀⠀⠂⠐⠀⠀⠨⠀⠀⠀⠐⠠⠀⠀⡀⠂⠄⠀⠀⠂⠄⠀⢀⠡⠁⠀⡀⠂⢁⠀⡀⠅⢁⠀⡀⠡⠁⡀⠀⠡⠁⠄⢀⠨⠀⡀⠀⠀⠂⠁⠀⠀⠅⠁⢀⠀⠂⠄⠀⡀⠂⠄⠀⡀⠂⠄⢀⠀⠅
+⠀⠀⠐⠐⠀⠀⠐⠀⠂⠀⠂⠂⠁⠀⠐⠠⠀⠀⠈⠄⠄⠀⠀⠡⠀⠀⠀⠌⠈⠀⠀⠌⠐⠀⡀⠡⠁⡀⠀⡁⠅⠂⠀⠨⠐⠀⠀⠠⠁⠁⠀⠠⠁⠂⠀⠀⠡⠀⡀⠀⠂⠄⠀⠀⡐⠠⠀⠀⠄⠡⠀⠀⡐⠠⠀⠀⢀⠊⢀⠀⠨⠈⠄⠀⠈⠄⠂⠀⡀⠅⠄⠀⠀⠅⠄⠀⠀⠂⠂⠀
+⠠⠡⠀⢀⠡⠁⠂⠀⠁⠅⢀⠀⠨⠈⠄⠀⠈⠌⢀⠀⠠⠈⠂⠀⡀⠅⢁⠀⠈⠨⠐⠀⠀⠡⠐⠀⠀⠠⠁⠀⠀⠠⠡⠀⠀⠨⠈⠄⠀⠨⠈⠄⠀⠠⠁⠂⢀⠀⠂⡁⠀⢀⠡⠁⠀⠀⠨⠐⠀⠀⠨⠐⠀⠀⠈⠌⠀⠀⠠⠨⠀⠀⠠⠁⠁⠀⡀⠅⠄⠀⠀⠌⠐⠀⠀⡁⠅⠀⡀⠅
+
